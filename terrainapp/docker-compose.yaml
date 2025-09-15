@@ -30,6 +30,14 @@ services:
     depends_on:
       - firebase-emulators
     command: npm run dev
+  
+  # Service 3: Backend
+  backend:
+    build: ./backend
+    ports:
+      - "6969:6969"
+    depends_on:
+      - firebase-emulators
 
 # Named volume for node_modules
 volumes:
