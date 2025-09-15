@@ -1,7 +1,6 @@
-const logger = require('../../../logger.js')
-const express = require('express');
-const { db } = require('../config/firebase.js');
-const { getAuth } = require('firebase-admin/auth');
+const logger = require("../logger.js")
+const express = require("express");
+const { getAuth } = require("firebase-admin/auth");
 
 
 /**
