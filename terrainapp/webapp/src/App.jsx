@@ -1,17 +1,33 @@
 import { useState } from 'react';
 
 // A reusable component for the green/red seat indicators.
-const SeatCircle = ({ seatNumber }) => {
-  const isBooked = false;
+const SeatCircle = ({ seatNumber, isBooked }) => {
+  const [isSelected, setIsSelected] = useState(false);
 
+  // This code block determines the colors based on state (to be implemented later with the booking).
+  let bgColor, borderColor;
+  if (isBooked) {
+    bgColor = "bg-gray-300";
+    borderColor = "border-gray-500";
+  } else if (isSelected) {
+    bgColor = "bg-indigo-600";
+    borderColor = "border-indigo-800";
+  } else {
+    bgColor = "bg-sky-400";
+    borderColor = "border-sky-700";
+  }
+
+  // The seat circle and number
   return (
     <div className="flex flex-col items-center gap-2">
       <div
-        className={`w-[69px] h-[69px] rounded-full border-2 ${
-          isBooked
-            ? 'bg-red-400 border-red-700'
-            : 'bg-seat-green-fill border-seat-green-border'
-        }`}
+        onClick={() => !isBooked && setIsSelected(!isSelected)}
+        className={[
+          "w-[69px] h-[69px] rounded-full border-2 cursor-pointer transition-all duration-200 hover:scale-110",
+          bgColor,
+          borderColor,
+          isBooked ? "cursor-not-allowed opacity-60" : ""
+        ].join(' ')}
       ></div>
       <span className="font-mono text-lg">{seatNumber}</span>
     </div>
