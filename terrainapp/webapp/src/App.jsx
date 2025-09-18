@@ -34,6 +34,50 @@ const SeatCircle = ({ seatNumber, isBooked }) => {
   );
 };
 
+/**
+ * Summary: A modal dialog for booking a seat.
+ * @returns {JSX.Element|null} The booking modal or null if not open.
+ */
+const BookingModal = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+      <div className="bg-white p-6 rounded-lg">
+        <h2 className="text-2xl font-bold mb-4">New Booking</h2>
+        {/* Start Time input */}
+        <label className="block mb-2 font-semibold">
+          Start Time
+          <input 
+            type="time" 
+            className="border p-2 rounded mb-4 block w-full"
+          />
+        </label>
+        {/* End Time input */}
+        <label className="block mb-2 font-semibold">
+          End Time
+          <input 
+            type="time" 
+            className="border p-2 rounded mb-4 block w-full"
+          />
+        </label>
+        <div className="flex gap-4">
+          <button 
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-200 rounded"
+          >
+            Cancel
+          </button>
+          <button 
+            className="px-4 py-2 bg-sky-400 text-white rounded"
+          >
+            Book
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};  
+
 // A reusable component for an entire desk section.
 const Desk = ({ deskName }) => {
   return (
