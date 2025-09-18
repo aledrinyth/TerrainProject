@@ -118,9 +118,13 @@ const Logo = () => {
   );
 };
 
-
+/**
+ * Summary: The main App component that lays out the page.
+ * @returns {JSX.Element} The main App component.
+ */
 // The main App component that lays out the page.
 export default function App() {
+    const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   return (
     // Add `relative` to this container to act as the positioning anchor for the logo
     <div className="relative flex flex-col items-center justify-center min-h-screen font-sans bg-gray-100 p-4 pt-24">
@@ -130,14 +134,23 @@ export default function App() {
         <Logo />
       </header>
       
-      {/* Outer booking rectangle - This content remains centered as before */}
-      <div className="absolute top-[160px] left-[115px] right-[115px] min-h-[600px] border-2 border-black rounded-26px flex flex-col lg:flex-row items-center transform scale-75 justify-center pt-20 pb-10 gap-4">
-        
-        {/* We render the two Desk components here */}
-        <Desk deskName="DESK 1" />
-        <Desk deskName="DESK 2" />
-
-      </div>
+      {/* Add new Booking Button */}
+      <button 
+        onClick={() => setIsBookingModalOpen(true)}
+        className="mb-14 px-6 py-2 bg-sky-400 text-white rounded-lg hover:bg-sky-500 transition-colors"
+      >
+        New Booking
+      </button>
+      {/*Existing desk layout*/}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <Desk deskName="DESK 1" />
+      <Desk deskName="DESK 2" />
+    </div>
+      {/* Booking Modal */}
+      <BookingModal 
+        isOpen={isBookingModalOpen} 
+        onClose={() => setIsBookingModalOpen(false)} 
+      />
     </div>
   );
 }
