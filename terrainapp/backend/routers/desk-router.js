@@ -23,7 +23,7 @@ router.get("/desk/:id", getDeskById);
 router.get("/desk/name/:name", getDesksByName);
 
 // Update desk by ID
-router.put("/desk/:id", updateDesk);
+router.patch("/desk/:id", updateDesk);
 
 // Delete desk by ID
 router.delete("/desk/:id", deleteDesk);
