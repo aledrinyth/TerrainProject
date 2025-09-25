@@ -108,8 +108,8 @@ const Desk = ({ deskName }) => {
 // Using a standard <img> tag pointing to a static asset in the 'public' folder.
 const Logo = () => {
   return (
-    <img 
-      width="557" 
+    <img
+      width="557"
       height="104"
       // The space in the filename has been URL-encoded to %20 for reliability.
       src="/terrain.svg"

@@ -17,10 +17,10 @@ const LoginInput = ({ placeholder, type = 'text', value, onChange }) => {
 // Logo component
 const Logo = () => {
   return (
-    <img 
-      src="/terrain.svg" 
-      alt="Terrain Logo" 
-      style={{ width: '558px', height: '231px' }} 
+    <img
+      src="/terrain.svg"
+      alt="Terrain Logo"
+      className="w-[558px] h-auto" // Use Tailwind classes for responsive sizing
     />
   );
 };
@@ -41,7 +41,7 @@ export default function Login() {
       {/* Main login form */}
       <main className="flex flex-col items-center gap-y-6 pt-[300px]"> {/* Added padding-top to push form below logo */}
         <LoginInput
-          placeholder="USERNAME / EMAIL"
+          placeholder="EMAIL"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
