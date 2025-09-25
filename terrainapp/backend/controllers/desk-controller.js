@@ -14,20 +14,24 @@ const { db } = require("../config/firebase.js");
  * createDesk(req, res);
  */
 const createDesk = async (req, res) => {
-    const { name, seats } = req.body;
+    const { name, seats, roomId, positionX, positionY, isBooked} = req.body;
     
     try {
         // Validation
-        if (!name || !seats) {
+        if (!name || !seats || !roomId) {
             return res.status(400).json({
-                error: "Name and seats are required."
+                error: "Name, seats and roomId are required."
             });
         }
 
         // Add desk to "desks" collection
         const deskRef = await db.collection("desks").add({
             name: name,
+            roomId: roomId,
             seats: seats,
+            positionX: positionX || 0,
+            positionY: positionY || 0,
+            isBooked: isBooked || false,
             createdAt: new Date()
         });
 
@@ -37,7 +41,11 @@ const createDesk = async (req, res) => {
             desk: {
                 id: deskRef.id,
                 name: name,
-                seats: seats
+                roomId: roomId,
+                seats: seats,
+                positionX: positionX || 0,
+                positionY: positionY || 0,
+                isBooked: isBooked || false,
             }
         });
 
@@ -71,30 +79,30 @@ const getDesksByName = async (req, res) => {
             });
         }
 
-        // Add desk to "desks" collection
+        // Get desks
         const desksSnapshot = await db.collection("desks").where("name", "==", name).get();
 
         if (desksSnapshot.empty) {
-            return res.status(404).json({ error: "No desks found." });
+            return res.status(404).json({ error: "No desk(s) found." });
         }
 
         const desks = []
 
-        desksSnapshot.forEach(deskSnapshot => {
+        desksSnapshot.forEach(desk => {
             desks.push({
-                id: deskSnapshot.id,
-                ...deskSnapshot.data()
+                id: desk.id,
+                ...desk.data()
             });
         })
 
         // Success
         return res.status(200).json({
-            message: desks.length + " desks returned successfully.",
+            message: desks.length + " desk(s) returned successfully.",
             desks: desks
         });
 
     } catch (error) {
-        logger.error("Error getting desks by name: " + error);
+        logger.error("Error getting desk(s) by name: " + error);
         return res.status(500).json({
             error: "Internal server error"
         });
@@ -124,7 +132,7 @@ const getDeskById = async (req, res) => {
             });
         }
 
-        // Add desk to "desks" collection
+        // Get desks
         const desksSnapshot = await db.collection("desks").doc(id).get();
 
         if (!desksSnapshot.exists) {
@@ -158,12 +166,12 @@ const getDeskById = async (req, res) => {
  * @throws {Error} If input validation fails or database error occurs.
  * @example
  * GET /desks
- * getDeskByName(req, res);
+ * getAllDesks(req, res);
  */
 const getAllDesks = async (req, res) => {
     
     try {
-        // Add desk to "desks" collection
+        // Get all desks
         const desksSnapshot = await db.collection("desks").get();
 
         if (desksSnapshot.empty) {
@@ -172,10 +180,10 @@ const getAllDesks = async (req, res) => {
 
         const desks = []
 
-        desksSnapshot.forEach(deskSnapshot => {
+        desksSnapshot.forEach(desk => {
             desks.push({
-                id: deskSnapshot.id,
-                ...deskSnapshot.data()
+                id: desk.id,
+                ...desk.data()
             });
         })
 
@@ -206,7 +214,7 @@ const getAllDesks = async (req, res) => {
  */
 const updateDesk = async (req, res) => {
     const { id } = req.params;
-    const { name, seats } = req.body;
+    const { name, seats, roomId, positionX, positionY, isBooked } = req.body;
     try {
         // Validation
         if (!id) {
@@ -217,6 +225,10 @@ const updateDesk = async (req, res) => {
         const updateData = {};
         if (name != undefined) updateData.name = name;
         if (seats != undefined) updateData.seats = seats;
+        if (roomId != undefined) updateData.roomId = roomId;
+        if (positionX != undefined) updateData.positionX = positionX;
+        if (positionY != undefined) updateData.positionY = positionY;
+        if (isBooked != undefined) updateData.isBooked = isBooked;
         updateData.updatedAt = new Date();
 
         // Update desk with the specified information
