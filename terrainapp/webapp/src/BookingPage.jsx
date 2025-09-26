@@ -38,18 +38,35 @@ const SeatCircle = ({ seatNumber, isBooked }) => {
  * Summary: A modal dialog for booking a seat.
  * @returns {JSX.Element|null} The booking modal or null if not open.
  */
-const BookingModal = ({ isOpen, onClose }) => {
+const BookingModal = ({ isOpen, onClose, selectedDate }) => {
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+
+
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg">
         <h2 className="text-2xl font-bold mb-4">New Booking</h2>
+        {/* Date display (disabled, users select outside modal) */}
+        <label className="block mb-2 font-semibold">
+          Date
+          <input
+            type="text"
+            className="border p-2 rounded mb-4 block w-full bg-gray-200"
+            value={selectedDate || ""}
+            disabled
+            readOnly
+          />
+        </label>
         {/* Start Time input */}
         <label className="block mb-2 font-semibold">
           Start Time
           <input 
             type="time" 
             className="border p-2 rounded mb-4 block w-full"
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
           />
         </label>
         {/* End Time input */}
@@ -58,6 +75,8 @@ const BookingModal = ({ isOpen, onClose }) => {
           <input 
             type="time" 
             className="border p-2 rounded mb-4 block w-full"
+            value={endTime}
+            onChange={(e) => setEndTime(e.target.value)}
           />
         </label>
         <div className="flex gap-4">
@@ -69,6 +88,7 @@ const BookingModal = ({ isOpen, onClose }) => {
           </button>
           <button 
             className="px-4 py-2 bg-sky-400 text-white rounded"
+            disabled={!startTime || !endTime}
           >
             Book
           </button>
@@ -124,34 +144,77 @@ const Logo = () => {
  */
 // The main App component that lays out the page.
 export default function App() {
-    const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState("");
+
+  // Handles date selection from calendar input
+  const handleDateChange = (e) => {
+    setSelectedDate(e.target.value);
+    setIsDatePickerOpen(false);
+  };
+
+  // Dummy logout function
+  const handleLogout = () => {
+    // Implement actual logout logic here, e.g., clearing tokens and redirecting
+    alert("Logged out!");
+  };
+
   return (
-    // Add `relative` to this container to act as the positioning anchor for the logo
     <div className="relative flex flex-col items-center justify-center min-h-screen font-sans bg-gray-100 p-4 pt-24">
-      
       {/* The header is positioned absolutely relative to the main container */}
-      <header className="absolute top-[24px] left-[34px]">
+      <header className="absolute top-[24px] left-[34px] flex items-center w-[calc(100vw-68px)] justify-between pr-20">
         <Logo />
+        {/* Logout button moved left, within boundaries */}
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-500 transition-colors"
+          style={{marginRight: '16px'}}
+        >
+          Logout
+        </button>
       </header>
       
-      {/* Add new Booking Button */}
-      <button 
-        onClick={() => setIsBookingModalOpen(true)}
-        className="mb-14 px-6 py-2 bg-sky-400 text-white rounded-lg hover:bg-sky-500 transition-colors"
-      >
-        New Booking
-      </button>
-      {/*Existing desk layout*/}
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <Desk deskName="DESK 1" />
-      <Desk deskName="DESK 2" />
-    </div>
+      {/* Select Date button/modal above New Booking */}
+      <div className="flex flex-col items-center gap-4 mb-14">
+        <div className="relative">
+          <button
+            onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
+            {selectedDate ? `Date: ${selectedDate}` : "Select Date"}
+          </button>
+          {isDatePickerOpen && (
+            <input
+              type="date"
+              className="absolute left-0 top-12 bg-white border p-2 rounded shadow"
+              value={selectedDate}
+              onChange={handleDateChange}
+              min={new Date().toISOString().split('T')[0]}
+              autoFocus
+              onBlur={() => setIsDatePickerOpen(false)}
+            />
+          )}
+        </div>
+        <button 
+          onClick={() => setIsBookingModalOpen(true)}
+          className="px-6 py-2 bg-sky-400 text-white rounded-lg hover:bg-sky-500 transition-colors"
+          disabled={!selectedDate}
+        >
+          New Booking
+        </button>
+      </div>
+      {/* Existing desk layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <Desk deskName="DESK 1" />
+        <Desk deskName="DESK 2" />
+      </div>
       {/* Booking Modal */}
       <BookingModal 
         isOpen={isBookingModalOpen} 
-        onClose={() => setIsBookingModalOpen(false)} 
+        onClose={() => setIsBookingModalOpen(false)}
+        selectedDate={selectedDate}
       />
     </div>
   );
 }
-
