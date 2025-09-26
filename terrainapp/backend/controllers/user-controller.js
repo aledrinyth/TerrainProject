@@ -86,7 +86,7 @@ const createUser = async (req, res) => {
  * getUserByName(req, res);
  */
 const getUserByEmail = async (req, res) => {
-    const { email } = req.body;
+    const { email } = req.params;
     const token = req.headers.authorization?.split("Bearer ")[1];
     
     try {
@@ -212,7 +212,7 @@ const getUserById = async (req, res) => {
  * getUserByPhoneNumber(req, res);
  */
 const getUserByPhoneNumber = async (req, res) => {
-    const { phoneNumber } = req.body;
+    const { phoneNumber } = req.params;
     const token = req.headers.authorization?.split("Bearer ")[1];
     
     try {
@@ -337,7 +337,7 @@ const getAllUsers = async (req, res) => {
  * updateUser(req, res);
  */
 const updateUser = async (req, res) => {
-    const { emailQuery } = req.body;
+    const { emailQuery } = req.params;
     const { name, password, email, phoneNumber } = req.body;
     const token = req.headers.authorization?.split("Bearer ")[1];
 
@@ -487,7 +487,7 @@ const deleteUser = async (req, res) => {
  */
 const setAdmin = async (req, res) => {
   // We identify the user to be promoted by their email in the request body
-  const { email } = req.body;
+  const { email } = req.param;
 
   if (!email) {
     return res.status(400).json({ error: 'Email is required in the request body.' });
@@ -515,6 +515,7 @@ module.exports = {
                 createUser, 
                 getUserByEmail, 
                 getUserById, 
+                getUserByPhoneNumber,
                 getAllUsers, 
                 updateUser, 
                 deleteUser,

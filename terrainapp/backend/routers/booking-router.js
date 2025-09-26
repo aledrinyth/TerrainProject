@@ -14,30 +14,30 @@ const {
 const router = express.Router();
 
 // Create a new booking
-router.post("/booking", createBooking);
+router.post("/", createBooking);
 
 // Get all bookings
-router.get("/booking", getAllBookings);
+router.get("/", getAllBookings);
 
 // Get booking by ID
-router.get("/booking/:id", getBookingById);
+router.get("/:id", getBookingById);
 
 // Get booking by starting Timestamp
-router.get("/booking/:id", getBookingByStartTimestamp);
+router.get("/by-start-time", getBookingByStartTimestamp);
 
 // Get booking by end Timestamp
-router.get("/booking/:id", getBookingByEndTimestamp);
+router.get("/by-end-time", getBookingByEndTimestamp);
 
 // Get bookings by name
-router.get("/booking/name/:name", getBookingsByName);
+router.get("/name/:name", getBookingsByName);
 
 // Update booking by ID
-router.patch("/booking/:id", updateBooking);
+router.patch("/:id", updateBooking);
 
-// Cancel booking
-router.patch("/booking/:id", cancelBooking)
+// Cancel booking by ID
+router.patch("/cancel/:id", cancelBooking)
 
 // Delete booking by ID (Admin only)
-router.delete("/booking/:id", deleteBooking);
+router.delete("/:id", deleteBooking);
 
 module.exports = router;

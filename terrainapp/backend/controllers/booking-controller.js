@@ -197,7 +197,7 @@ const getBookingById = async (req, res) => {
  * getBookingByStartTimestamp(req, res);
  */
 const getBookingByStartTimestamp = async (req, res) => {
-    const { startTimestamp, deskId } = req.body;
+    const { startTimestamp, deskId } = req.query;
 
     try {
         // Validation
@@ -273,7 +273,7 @@ const getBookingByStartTimestamp = async (req, res) => {
  * getBookingByEndTimestamp(req, res);
  */
 const getBookingByEndTimestamp = async (req, res) => {
-    const { endTimestamp, deskId } = req.body;
+    const { endTimestamp, deskId } = req.query;
 
     try {
         // Validation
