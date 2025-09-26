@@ -1,49 +1,35 @@
 const express = require("express");
 const { 
     createUser, 
-    getUsersByName, 
-    getBookingById, 
-    getBookingByStartTimestamp, 
-    getBookingByEndTimestamp, 
-    getAllBookings, 
-    updateBooking, 
-    cancelBooking, 
-    deleteBooking,
+    getUserByEmail, 
+    getUserById, 
+    getAllUsers, 
+    updateUser, 
+    deleteUser,
     setAdmin
 } = require("../controllers/user-controller");
 
-const { checkIfAdmin } = require('../middleware/auth')
-
 const router = express.Router();
 
-// Create a new user
+// Create a new user (Admin only)
 router.post("/create-user", createUser);
 
-// Get users by name
-router.get("/get-users/:name", getUsersByName);
+// Get user by email (Admin only)
+router.get("/get-user-by-email", getUserByEmail);
 
-// Get booking by id
-router.get("/get-booking/:id", getBookingById);
+// Get user by ID (Admin only)
+router.get("/get-user/:id", getUserById);
 
-// Get booking by time start stamp
-router.get("/get-booking/start", getBookingByStartTimestamp);
+// Get all users (Admin only)
+router.get("/get-all-users", getAllUsers);
 
-// Get booking by time start stamp
-router.get("/get-booking/end", getBookingByEndTimestamp);
+// Update user by email (Admin only)
+router.patch("/update-user/:emailQuery", updateUser);
 
-// Get all bookings
-router.get("/get-booking/all", getAllBookings);
+// Delete user by email (Admin only)
+router.delete("/delete-user/:email", deleteUser);
 
-// Update booking
-router.patch("/update-booking/:id", updateBooking);
-
-// Cancel booking
-router.patch("/cancel-booking/:id", cancelBooking);
-
-// Delete booking
-router.delete("/delete-booking/:id", deleteBooking);
-
-// Set admin user
-router.post('/set-admin-role', checkIfAdmin, setAdmin);
+// Set admin user (Admin only)
+router.post('/set-admin-role', setAdmin);
 
 module.exports = router;
