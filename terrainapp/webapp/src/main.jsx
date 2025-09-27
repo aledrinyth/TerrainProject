@@ -5,6 +5,7 @@ import { Route, Routes, BrowserRouter } from 'react-router-dom';
 import ProtectedRoute from '../components/ProtectedRoute.jsx'
 import BookingPage from './BookingPage.jsx'; // Import the BookingPage component
 import Login from './Login.jsx'; // Import the Login component
+import AdminPage from './AdminPage.jsx'; // Import the AdminPage component
 import './index.css';
 
 createRoot(document.getElementById('root')).render(

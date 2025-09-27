@@ -20,10 +20,10 @@ const LoginInput = ({ placeholder, type = 'text', value, onChange }) => {
 // Logo component
 const Logo = () => {
   return (
-    <img 
-      src="/terrain.svg" 
-      alt="Terrain Logo" 
-      style={{ width: '558px', height: '231px' }} 
+    <img
+      src="/terrain.svg"
+      alt="Terrain Logo"
+      className="w-[558px] h-auto" // Use Tailwind classes for responsive sizing
     />
   );
 };
@@ -52,7 +52,7 @@ export default function Login() {
 
       if (isAdmin) {
         alert('Login successful! Welcome, Admin!');
-        navigate('/booking');
+        navigate('/admin');
         // Redirect to admin dashboard: history.push('/admin') or similar
       } else {
         alert('Login successful! Welcome, User!');
@@ -78,7 +78,7 @@ export default function Login() {
       <main className="flex flex-col items-center gap-y-6 pt-[300px]"> {/* Added padding-top to push form below logo */}
         <form onSubmit={handleLogin} className="flex flex-col items-center gap-y-6">
           <LoginInput
-            placeholder="USERNAME / EMAIL"
+            placeholder="EMAIL"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
