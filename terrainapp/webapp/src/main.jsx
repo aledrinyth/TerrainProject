@@ -10,6 +10,6 @@ import './index.css';
 // Change BookingPage to login to view the login page and vice versa 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <Login />
+    <BookingPage />
   </StrictMode>,
 );

@@ -17,19 +17,18 @@ const SeatCircle = ({ seatNumber, isBooked }) => {
     borderColor = "border-sky-700";
   }
 
-  // The seat circle and number
+  // The seat circle with the number inside
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div
-        onClick={() => !isBooked && setIsSelected(!isSelected)}
-        className={[
-          "w-[69px] h-[69px] rounded-full border-2 cursor-pointer transition-all duration-200 hover:scale-110",
-          bgColor,
-          borderColor,
-          isBooked ? "cursor-not-allowed opacity-60" : ""
-        ].join(' ')}
-      ></div>
-      <span className="font-mono text-lg">{seatNumber}</span>
+    <div
+      onClick={() => !isBooked && setIsSelected(!isSelected)}
+      className={[
+        "w-16 h-16 rounded-full border-2 cursor-pointer transition-all duration-200 hover:scale-110 flex items-center justify-center",
+        bgColor,
+        borderColor,
+        isBooked ? "cursor-not-allowed opacity-60" : ""
+      ].join(' ')}
+    >
+      <span className="font-mono text-xl text-white font-bold">{seatNumber}</span>
     </div>
   );
 };
@@ -79,26 +78,28 @@ const BookingModal = ({ isOpen, onClose }) => {
 };  
 
 // A reusable component for an entire desk section.
-const Desk = ({ deskName }) => {
+const Desk = ({ deskName, seatNumberOffset = 0 }) => {
   return (
-    <div className="w-full md:w-[545px] h-[459px] bg-desk-fill border-2 border-black rounded-26px flex flex-col items-center p-6 pt-8">
-      <h3 className="font-mono text-3xl font-bold mb-auto">{deskName}</h3>
+    <div className="w-full md:w-[545px] h-[459px] bg-desk-fill border-2 border-black rounded-26px flex flex-col p-6">
+      <h3 className="font-mono text-3xl font-bold text-center mb-6">{deskName}</h3>
       
-      <div className="flex flex-col items-center gap-4 w-full">
-        <div className="flex justify-center gap-[101px] w-full">
-          <div className="w-[164px] h-[229px] bg-monitor-fill border-2 border-black rounded-17px -rotate-90"></div>
-          <div className="w-[164px] h-[229px] bg-monitor-fill border-2 border-black rounded-17px -rotate-90"></div>
+      <div className="flex-grow flex items-center justify-center gap-8 w-full">
+        {/* Left Seats with continuous numbering */}
+        <div className="flex flex-col gap-12">
+          <SeatCircle seatNumber={1 + seatNumberOffset} />
+          <SeatCircle seatNumber={2 + seatNumberOffset} />
         </div>
 
-        <div className="flex justify-between w-full max-w-md px-4">
-          <div className="flex items-center gap-8">
-            <SeatCircle seatNumber={1} />
-            <SeatCircle seatNumber={2} />
-          </div>
-          <div className="flex items-center gap-8">
-            <SeatCircle seatNumber={3} />
-            <SeatCircle seatNumber={4} />
-          </div>
+        {/* Monitors */}
+        <div className="flex gap-4">
+          <div className="w-[100px] h-[229px] bg-monitor-fill border-2 border-black rounded-17px"></div>
+          <div className="w-[100px] h-[229px] bg-monitor-fill border-2 border-black rounded-17px"></div>
+        </div>
+
+        {/* Right Seats with continuous numbering */}
+        <div className="flex flex-col gap-12">
+          <SeatCircle seatNumber={3 + seatNumberOffset} />
+          <SeatCircle seatNumber={4 + seatNumberOffset} />
         </div>
       </div>
     </div>
@@ -143,8 +144,8 @@ export default function App() {
       </button>
       {/*Existing desk layout*/}
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <Desk deskName="DESK 1" />
-      <Desk deskName="DESK 2" />
+      <Desk deskName="DESK 1" seatNumberOffset={0} />
+      <Desk deskName="DESK 2" seatNumberOffset={4} />
     </div>
       {/* Booking Modal */}
       <BookingModal 
