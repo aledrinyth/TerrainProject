@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState } from 'react';
 
 // A reusable component for the green/red seat indicators.
@@ -186,6 +187,7 @@ export default function App() {
           </button>
           {isDatePickerOpen && (
             <input
+              data-testid="date-input"
               type="date"
               className="absolute left-0 top-12 bg-white border p-2 rounded shadow"
               value={selectedDate}
