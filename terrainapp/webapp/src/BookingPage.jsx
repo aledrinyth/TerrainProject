@@ -119,6 +119,15 @@ const Logo = () => {
   );
 };
 
+const Kitchen = () => {
+  return (
+    <div className="w-[150px] h-[459px] bg-gray-200 border-2 border-black rounded-26px flex items-center justify-center">
+      <span className="font-mono text-3xl font-bold transform -rotate-90 whitespace-nowrap">Kitchen</span>
+    </div>
+  );
+};
+
+
 /**
  * Summary: The main App component that lays out the page.
  * @returns {JSX.Element} The main App component.
@@ -143,10 +152,14 @@ export default function App() {
         New Booking
       </button>
       {/*Existing desk layout*/}
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <Desk deskName="DESK 1" seatNumberOffset={0} />
-      <Desk deskName="DESK 2" seatNumberOffset={4} />
-    </div>
+      <div className="flex items-center justify-center gap-16">
+        <Kitchen />
+        {/* Container for the desks, keeping the original grid layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <Desk deskName="" seatNumberOffset={0} />
+          <Desk deskName="" seatNumberOffset={4} />
+        </div>
+      </div>
       {/* Booking Modal */}
       <BookingModal 
         isOpen={isBookingModalOpen} 
