@@ -197,7 +197,7 @@ const getBookingById = async (req, res) => {
  * getBookingByStartTimestamp(req, res);
  */
 const getBookingByStartTimestamp = async (req, res) => {
-    const { startTimestamp, deskId } = req.body;
+    const { startTimestamp, deskId } = req.query;
 
     try {
         // Validation
@@ -273,7 +273,7 @@ const getBookingByStartTimestamp = async (req, res) => {
  * getBookingByEndTimestamp(req, res);
  */
 const getBookingByEndTimestamp = async (req, res) => {
-    const { endTimestamp, deskId } = req.body;
+    const { endTimestamp, deskId } = req.query;
 
     try {
         // Validation
@@ -370,6 +370,7 @@ const getAllBookings = async (req, res) => {
 
         // Success
         return res.status(200).json({
+            message: "Successfully returned all bookings.",
             bookings: bookings
         });
 
@@ -519,13 +520,32 @@ const cancelBooking = async (req, res) => {
  */
 const deleteBooking = async (req, res) => {
     const { id } = req.params;
+    const token = req.headers.authorization?.split("Bearer ")[1];
+
     try {
         // Validation
         if (!id) {
             return res.status(400).json({ error: "id is required." });
         }
 
-        // Update bookings with the specified information
+        // Check if there is a token
+        if (!token) {
+            return res.status(401).json({
+                error: "Authorisation token required."
+            });
+        }
+
+        // Check if admin
+        const decodedToken = await getAuth().verifyIdToken(token);
+
+        // Check the claim directly on the token
+        if (decodedToken.admin !== true){
+            return res.status(403).json({
+                error: "Delete booking can only be done by admin."
+            })
+        }
+
+        // Delete booking
         const bookingRef = db.collection("bookings").doc(id);
 
         const bookingSnapshot = await bookingRef.get(); // Get for validation

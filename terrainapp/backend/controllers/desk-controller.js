@@ -189,6 +189,7 @@ const getAllDesks = async (req, res) => {
 
         // Success
         return res.status(200).json({
+            message: "Successfully returned all desks.",
             desks: desks
         });
 

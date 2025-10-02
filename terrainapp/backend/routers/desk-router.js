@@ -11,21 +11,21 @@ const {
 const router = express.Router();
 
 // Create a new desk
-router.post("/desk", createDesk);
+router.post("/", createDesk);
 
 // Get all desks
-router.get("/desk", getAllDesks);
+router.get("/", getAllDesks);
 
 // Get desk by ID
-router.get("/desk/:id", getDeskById);
+router.get("/:id", getDeskById);
 
 // Get desks by name
-router.get("/desk/name/:name", getDesksByName);
+router.get("/name/:name", getDesksByName);
 
 // Update desk by ID
-router.patch("/desk/:id", updateDesk);
+router.patch("/:id", updateDesk);
 
 // Delete desk by ID
-router.delete("/desk/:id", deleteDesk);
+router.delete("/:id", deleteDesk);
 
 module.exports = router;
