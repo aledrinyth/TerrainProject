@@ -13,7 +13,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<CustomerBookingPOV />} />
+        <Route path="/" element={<AdminPage />} />
         <Route path="/booking" element={
             <ProtectedRoute>
               <BookingPage />
