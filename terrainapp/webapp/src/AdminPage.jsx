@@ -37,6 +37,23 @@ function getDuration(start, end) {
   return `${h > 0 ? `${h}h` : ""} ${m > 0 ? `${m}m` : ""}`.trim();
 }
 
+function formatToHHMM(ts) {
+  let date;
+  if (!ts) return "N/A";
+  if (typeof ts === "number") {
+    date = new Date(ts);
+  } else if (typeof ts === "object" && "_seconds" in ts) {
+    date = new Date(ts._seconds * 1000);
+  } else if (typeof ts === "string") {
+    date = new Date(ts);
+  } else {
+    return "N/A";
+  }
+  return isNaN(date.getTime())
+    ? "Invalid date"
+    : date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+}
+
 /**
  * Summary: AdminPage component to display current bookings in a table format.
  * @returns {JSX.Element} AdminPage component displaying current bookings in a table.
@@ -71,27 +88,39 @@ export default function AdminPage() {
     fetchBookings();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-500 text-lg font-mono">Loading bookings...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-red-500 text-lg font-mono">{error}</p>
-      </div>
-    );
+    function formatDateTime(ts) {
+    let date;
+    if (!ts) return "N/A";
+    if (typeof ts === "number") {
+      date = new Date(ts);
+    } else if (typeof ts === "object" && "_seconds" in ts) {
+      date = new Date(ts._seconds * 1000);
+    } else if (typeof ts === "string") {
+      date = new Date(ts);
+    } else {
+      return "N/A";
+    }
+    return isNaN(date.getTime()) ? "Invalid date" : date.toLocaleString();
   }
 
   function formatTime(timestampObj) {
-    if (!timestampObj || typeof timestampObj !== "number") return "N/A";
-    const date = new Date(timestampObj._seconds * 1000);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+  let date;
+  if (!timestampObj) return "N/A";
+  if (typeof timestampObj === "number") {
+    // If stored as milliseconds
+    date = new Date(timestampObj);
+  } else if (
+    typeof timestampObj === "object" &&
+    "_seconds" in timestampObj
+  ) {
+    date = new Date(timestampObj._seconds * 1000);
+  } else if (typeof timestampObj === "string") {
+    date = new Date(timestampObj);
+  } else {
+    return "N/A";
   }
+  return isNaN(date.getTime()) ? "Invalid date" : date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+}
         
 
   return (
@@ -107,9 +136,9 @@ export default function AdminPage() {
           <thead>
             <tr className="bg-gray-200">
               <th className="px-4 py-3 text-left font-mono">Booking ID</th>
-              <th className="px-4 py-3 text-left font-mono">User ID</th>
+              <th className="px-4 py-3 text-left font-mono">Name</th>
               <th className="px-4 py-3 text-left font-mono">Desk</th>
-              <th className="px-4 py-3 text-left font-mono">Seat</th>
+              {/* <th className="px-4 py-3 text-left font-mono">Seat</th> */}
               <th className="px-4 py-3 text-left font-mono">Start Time</th>
               <th className="px-4 py-3 text-left font-mono">End Time</th>
               <th className="px-4 py-3 text-left font-mono">Duration</th>
@@ -119,23 +148,29 @@ export default function AdminPage() {
           <tbody>
             {bookings.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-8 text-gray-500 font-mono">
+                <td colSpan={7} className="text-center py-8 text-gray-500 font-mono">
                   No bookings found.
                 </td>
               </tr>
             ) : (
-              bookings.map((b) => (
-                <tr key={b.id} className="hover:bg-sky-50 transition">
-                  <td className="px-4 py-2 font-mono">{b.id}</td>
-                  <td className="px-4 py-2 font-mono">{b.userId}</td>
-                  <td className="px-4 py-2 font-mono">{b.desk}</td>
-                  <td className="px-4 py-2 font-mono">{b.seatNumber}</td>
-                  <td className="px-4 py-2 font-mono">{formatTime(b.startTime)}</td>
-                  <td className="px-4 py-2 font-mono">{formatTime(b.endTime)}</td>
-                  <td className="px-4 py-2 font-mono">{getDuration(formatTime(b.startTime), formatTime(b.endTime))}</td>
-                  <td className="px-4 py-2 font-mono">{new Date(b.createdAt).toLocaleString()}</td>
-                </tr>
-              ))
+              bookings.map((b) => {
+                // Use correct property names per your Firestore structure
+                const startTime = formatToHHMM(b.startTimestamp);
+                const endTime = formatToHHMM(b.endTimestamp);
+                const duration = getDuration(startTime, endTime);
+                return (
+                  <tr key={b.id} className="hover:bg-sky-50 transition">
+                    <td className="px-4 py-2 font-mono">{b.id}</td>
+                    <td className="px-4 py-2 font-mono">{b.userId}</td>
+                    <td className="px-4 py-2 font-mono">{b.deskId}</td>
+                    {/* REMOVED SEAT FIELD */}
+                    <td className="px-4 py-2 font-mono">{startTime}</td>
+                    <td className="px-4 py-2 font-mono">{endTime}</td>
+                    <td className="px-4 py-2 font-mono">{duration}</td>
+                    <td className="px-4 py-2 font-mono">{formatDateTime(b.createdAt)}</td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
