@@ -37,6 +37,11 @@ services:
     build: ./backend
     ports:
       - "6969:6969"
+    environment:
+      - NODE_ENV=development
+      - FIRESTORE_EMULATOR_HOST=firebase-emulators:8080
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulators:9099
+      - GCP_PROJECT=your-firebase-project-id # Match with the one above
     depends_on:
       - firebase-emulators
 
