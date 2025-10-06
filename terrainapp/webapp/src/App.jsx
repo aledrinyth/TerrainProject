@@ -1,12 +1,35 @@
-// src/App.jsx
+// webapp/src/App.jsx
 import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.jsx';
+
+// Page Components
+import Login from './Login.jsx';
+import BookingPage from './BookingPage.jsx';
+import AdminPage from './AdminPage.jsx';
+
+// Protected Route Component
+import ProtectedRoute from '../components/ProtectedRoute.jsx';
+
 export default function App() {
-  // Routing logic will be added here later.
-  // For now, it will just be a placeholder.
+  const { loading } = useAuth();
+
+  // Prevents a flicker of the login page if the user is already logged in
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <div>
-      <h1>App Container</h1>
-      {/* This is where a router would typically decide which page to show */}
-    </div>
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
+
+      {/* Protected Routes */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/booking" element={<BookingPage />} />
+        <Route path="/admin" element={<AdminPage />} />
+      </Route>
+    </Routes>
   );
 }
