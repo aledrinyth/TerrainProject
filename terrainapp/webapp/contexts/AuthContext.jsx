@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, createContext } from 'react';
-import { auth } from '../firebase'; 
-import { onAuthStateChanged, getIdTokenResult } from 'firebase/auth';
+import { auth } from '../firebase';
+import { onAuthStateChanged, getIdTokenResult, signOut } from 'firebase/auth'; // <-- ADD signOut
 
 // Auth Context
 // This context will hold the authentication state and be accessible by child components.
@@ -36,7 +36,7 @@ function useProvideAuth() {
         // User is signed in.
         const idTokenResult = await getIdTokenResult(firebaseUser);
         const userIsAdmin = idTokenResult.claims.admin === true;
-        
+
         // Set the user object and their admin status in state
         setUser(firebaseUser);
         setIsAdmin(userIsAdmin);
@@ -53,17 +53,15 @@ function useProvideAuth() {
   }, []); // Empty dependency array means this effect runs once on mount
 
   // sign-in, sign-out functions should probably go here in the future
-  // const signout = () => {
-  //   return signOut(auth).then(() => {
-  //     // State will be updated by the onAuthStateChanged listener
-  //   });
-  // };
+  const signout = () => {
+    return signOut(auth); // State will be updated by the onAuthStateChanged listener
+  };
 
   // Return the user state and any auth methods you want to expose
   return {
-  user,
-  isAdmin,
-  loading,
-    // signout,
+    user,
+    isAdmin,
+    loading,
+    signout, // EXPOSE signout
   };
 }

@@ -1,5 +1,8 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 // A reusable component for the green/red seat indicators.
 const SeatCircle = ({ seatNumber, isBooked, isSelected, onSelect, isLoading }) => {
@@ -257,13 +260,15 @@ const Desk = ({ deskName, seatNumberOffset = 0, seatAvailability, selectedSeats,
   );
 };
 
-// Using a standard <img> tag pointing to a static asset in the 'public' folder.
+/**
+ * Summary: Logo component using a static asset.
+ * @returns {JSX.Element} The Logo component element.
+ */
 const Logo = () => {
   return (
     <img
       width="557"
       height="104"
-      // The space in the filename has been URL-encoded to %20 for reliability.
       src="/terrain.svg"
       alt="Terrain Logo"
     />
@@ -302,8 +307,8 @@ const SuccessNotification = ({ message, isVisible, onClose }) => {
 };
 
 /**
- * Summary: The main App component that lays out the page.
- * @returns {JSX.Element} The main App component.
+ * Summary: The main component for the booking page layout and functionality.
+ * @returns {JSX.Element} The BookingPage component.
  */
 export default function App() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -337,7 +342,6 @@ export default function App() {
     
     return dateTime;
   };
-
   // Fetch seat availability for a specific date - ENHANCED to get real booking data
   const fetchSeatAvailability = async (date) => {
     setIsLoadingAvailability(true);
@@ -535,10 +539,18 @@ export default function App() {
     }
   };
 
-  // Dummy logout function
-  const handleLogout = () => {
-    // Implement actual logout logic here, Oscar to route this to login page
-    alert("Logged out!");
+  /**
+   * Summary: Handles user logout and navigates to the login page.
+   * @returns {void}
+   */
+  const handleLogout = async () => {
+    try {
+        await signout();
+        navigate('/login');
+    } catch (error) {
+        console.error("Logout failed:", error);
+        alert("Logout failed. Check console for details.");
+    }
   };
 
   return (
@@ -553,7 +565,7 @@ export default function App() {
       {/* The header is positioned absolutely relative to the main container */}
       <header className="absolute top-[24px] left-[34px] flex items-center w-[calc(100vw-68px)] justify-between pr-20">
         <Logo />
-        {/* Logout button moved left, within boundaries */}
+        {/* Logout button */}
         <button
           onClick={handleLogout}
           className="px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-500 transition-colors"
