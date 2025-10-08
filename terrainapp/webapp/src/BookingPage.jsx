@@ -1,7 +1,12 @@
 import React from 'react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
-// A reusable component for the green/red seat indicators.
+/**
+ * A reusable component for the green/red seat indicators.
+ * @returns {JSX.Element} The seat circle element.
+ */
 const SeatCircle = ({ seatNumber, isBooked }) => {
   const [isSelected, setIsSelected] = useState(false);
 
@@ -98,7 +103,10 @@ const BookingModal = ({ isOpen, onClose, selectedDate }) => {
   );
 };  
 
-// A reusable component for an entire desk section.
+/**
+ * Summary: A reusable component for an entire desk section.
+ * @returns {JSX.Element} The desk component element.
+ */
 const Desk = ({ deskName, seatNumberOffset = 0 }) => {
   return (
     <div className="w-full md:w-[545px] h-[459px] bg-desk-fill border-2 border-black rounded-26px flex flex-col p-6">
@@ -127,19 +135,25 @@ const Desk = ({ deskName, seatNumberOffset = 0 }) => {
   );
 };
 
-// Using a standard <img> tag pointing to a static asset in the 'public' folder.
+/**
+ * Summary: Logo component using a static asset.
+ * @returns {JSX.Element} The Logo component element.
+ */
 const Logo = () => {
   return (
     <img
       width="557"
       height="104"
-      // The space in the filename has been URL-encoded to %20 for reliability.
       src="/terrain.svg"
       alt="Terrain Logo"
     />
   );
 };
 
+/**
+ * Summary: Kitchen component.
+ * @returns {JSX.Element} The Kitchen component element.
+ */
 const Kitchen = () => {
   return (
     <div className="w-[150px] h-[459px] bg-gray-200 border-2 border-black rounded-26px flex items-center justify-center">
@@ -150,14 +164,16 @@ const Kitchen = () => {
 
 
 /**
- * Summary: The main App component that lays out the page.
- * @returns {JSX.Element} The main App component.
+ * Summary: The main component for the booking page layout and functionality.
+ * @returns {JSX.Element} The BookingPage component.
  */
-// The main App component that lays out the page.
-export default function App() {
+export default function BookingPage() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
+  
+  const navigate = useNavigate();
+  const { signout } = useAuth();
 
   // Handles date selection from calendar input
   const handleDateChange = (e) => {
@@ -165,10 +181,18 @@ export default function App() {
     setIsDatePickerOpen(false);
   };
 
-  // Dummy logout function
-  const handleLogout = () => {
-    // Implement actual logout logic here, e.g., clearing tokens and redirecting
-    alert("Logged out!");
+  /**
+   * Summary: Handles user logout and navigates to the login page.
+   * @returns {void}
+   */
+  const handleLogout = async () => {
+    try {
+        await signout();
+        navigate('/login');
+    } catch (error) {
+        console.error("Logout failed:", error);
+        alert("Logout failed. Check console for details.");
+    }
   };
 
   return (
@@ -176,7 +200,7 @@ export default function App() {
       {/* The header is positioned absolutely relative to the main container */}
       <header className="absolute top-[24px] left-[34px] flex items-center w-[calc(100vw-68px)] justify-between pr-20">
         <Logo />
-        {/* Logout button moved left, within boundaries */}
+        {/* Logout button */}
         <button
           onClick={handleLogout}
           className="px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-500 transition-colors"
