@@ -1,3 +1,6 @@
+//Added by Ariff
+const { adminAuth } = require("../config/firebase");
+
 const logger = require("../logger.js")
 const express = require("express");
 const { db } = require("../config/firebase.js");
@@ -487,7 +490,7 @@ const deleteUser = async (req, res) => {
  */
 const setAdmin = async (req, res) => {
   // We identify the user to be promoted by their email in the request body
-  const { email } = req.param;
+  const { email } = req.params; //changed by ariff
 
   if (!email) {
     return res.status(400).json({ error: 'Email is required in the request body.' });
