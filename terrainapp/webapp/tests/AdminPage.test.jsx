@@ -1,49 +1,125 @@
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
-import AdminPage from '../src/AdminPage'; // adjust path if needed
+import { render, screen, waitFor, within } from '@testing-library/react';
+import AdminPage from '../src/AdminPage';
 
-describe('AdminPage (no source changes)', () => {
-  test('renders table, sorts rows by createdAt desc, and shows correct durations', () => {
+// Mock bookingService
+jest.mock('../src/services/bookingService', () => ({
+  bookingService: {
+    getAllBookings: jest.fn(),
+  },
+}));
+
+// Silence "Error fetching bookings" logs
+const originalError = console.error;
+beforeAll(() => {
+  console.error = (...args) => {
+    if (typeof args[0] === 'string' && args[0].includes('Error fetching bookings')) return;
+    originalError(...args);
+  };
+});
+afterAll(() => {
+  console.error = originalError;
+});
+
+describe('AdminPage', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // Test 1: Successful fetch → table rendered and sorted
+  test('renders table, sorts rows by createdAt desc, and shows correct durations', async () => {
+    const mockBookings = {
+      bookings: [
+        {
+          id: '1',
+          userId: 'userA',
+          deskId: 'Desk 1',
+          startTimestamp: '2025-09-28T09:00:00',
+          endTimestamp: '2025-09-28T11:00:00',
+          createdAt: '2025-09-27T09:00:00',
+        },
+        {
+          id: '2',
+          userId: 'userB',
+          deskId: 'Desk 2',
+          startTimestamp: '2025-09-28T10:00:00',
+          endTimestamp: '2025-09-28T13:00:00',
+          createdAt: '2025-09-28T12:00:00', // newest
+        },
+        {
+          id: '3',
+          userId: 'userC',
+          deskId: 'Desk 3',
+          startTimestamp: '2025-09-28T08:00:00',
+          endTimestamp: '2025-09-28T10:00:00',
+          createdAt: '2025-09-26T08:00:00', // oldest
+        },
+      ],
+    };
+
+    const { bookingService } = require('../src/services/bookingService');
+    bookingService.getAllBookings.mockResolvedValueOnce(mockBookings);
+
     render(<AdminPage />);
 
-    // Title present
-    expect(screen.getByText(/Admin: Current Bookings/i)).toBeInTheDocument();
+    // Wait for bookings to render fully
+    await waitFor(() => {
+      const rows = screen
+        .getAllByRole('row')
+        .filter((r) => r.closest('tbody') && !r.textContent.includes('No bookings'));
+      expect(rows.length).toBeGreaterThan(0);
+    });
 
-    // ✅ Get only the body rows (ignore thead)
     const table = screen.getByRole('table');
     const rows = within(table)
       .getAllByRole('row')
-      .filter(r => r.closest('tbody'));
+      .filter((r) => r.closest('tbody') && !r.textContent.includes('No bookings'));
+
     expect(rows).toHaveLength(3);
 
-    // Column order:
-    // [0] Booking ID, [1] User ID, [2] Desk, [3] Seat,
-    // [4] Start, [5] End, [6] Duration, [7] Booked At
-
-    // Assert sort order by createdAt desc -> IDs should be 2, 1, 3
-    const idsInOrder = rows.map(r =>
+    // Sorted by createdAt DESC → 2, 1, 3
+    const idsInOrder = rows.map((r) =>
       within(r).getAllByRole('cell')[0].textContent.trim()
     );
     expect(idsInOrder).toEqual(['2', '1', '3']);
 
+    // Duration checks
     const getCells = (row) => within(row).getAllByRole('cell');
+    const [row0, row1, row2] = rows.map(getCells);
 
-    // Row 0 -> id 2: 10:00–13:00 -> 3h
-    const row0 = getCells(rows[0]);
-    expect(row0[4]).toHaveTextContent('10:00');
-    expect(row0[5]).toHaveTextContent('13:00');
-    expect(row0[6]).toHaveTextContent('3h');
+    expect(row0[3]).toHaveTextContent('10:00');
+    expect(row0[4]).toHaveTextContent('13:00');
+    expect(row0[5]).toHaveTextContent('3h');
 
-    // Row 1 -> id 1: 09:00–11:00 -> 2h
-    const row1 = getCells(rows[1]);
-    expect(row1[4]).toHaveTextContent('09:00');
-    expect(row1[5]).toHaveTextContent('11:00');
-    expect(row1[6]).toHaveTextContent('2h');
+    expect(row1[3]).toHaveTextContent('09:00');
+    expect(row1[4]).toHaveTextContent('11:00');
+    expect(row1[5]).toHaveTextContent('2h');
 
-    // Row 2 -> id 3: 08:00–10:00 -> 2h
-    const row2 = getCells(rows[2]);
-    expect(row2[4]).toHaveTextContent('08:00');
-    expect(row2[5]).toHaveTextContent('10:00');
-    expect(row2[6]).toHaveTextContent('2h');
+    expect(row2[3]).toHaveTextContent('08:00');
+    expect(row2[4]).toHaveTextContent('10:00');
+    expect(row2[5]).toHaveTextContent('2h');
+  });
+
+  // Test 2: API fails → fallback message
+  test('shows "No bookings found." when API fails', async () => {
+    const { bookingService } = require('../src/services/bookingService');
+    bookingService.getAllBookings.mockRejectedValueOnce(new Error('API failure'));
+
+    render(<AdminPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/No bookings found/i)).toBeInTheDocument();
+    });
+  });
+
+  // Test 3: No data returned → fallback message
+  test('shows "No bookings found." when no data is returned', async () => {
+    const { bookingService } = require('../src/services/bookingService');
+    bookingService.getAllBookings.mockResolvedValueOnce({ bookings: [] });
+
+    render(<AdminPage />);
+
+    const noBookingsMsg = await screen.findByText(/No bookings found/i);
+    expect(noBookingsMsg).toBeInTheDocument();
   });
 });
