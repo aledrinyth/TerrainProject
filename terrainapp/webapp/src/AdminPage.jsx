@@ -55,6 +55,28 @@ function formatToHHMM(ts) {
 }
 
 /**
+ * Summary: Format date to locale date string.
+ * @param {string|object|number} ts - timestamp in various formats
+ * @returns {string} - formatted date string
+ */
+function formatDate(ts) {
+  let date;
+  if (!ts) return "N/A";
+  if (typeof ts === "number") {
+    date = new Date(ts);
+  } else if (typeof ts === "object" && "_seconds" in ts) {
+    date = new Date(ts._seconds * 1000);
+  } else if (typeof ts === "string") {
+    date = new Date(ts);
+  } else {
+    return "N/A";
+  }
+  return isNaN(date.getTime())
+    ? "Invalid date"
+    : date.toLocaleDateString();
+}
+
+/**
  * Summary: AdminPage component to display current bookings in a table format.
  * @returns {JSX.Element} AdminPage component displaying current bookings in a table.
  */
@@ -131,17 +153,16 @@ export default function AdminPage() {
       </header>
       <h1 className="text-3xl font-bold mb-12 mt-8 font-mono">Admin: Current Bookings</h1>
 
-      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-md border border-gray-200 p-8">
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-md border border-gray-200 p-8 overflow-x-auto">
         <table className="w-full table-auto">
           <thead>
             <tr className="bg-gray-200">
               <th className="px-4 py-3 text-left font-mono">Booking ID</th>
-              <th className="px-4 py-3 text-left font-mono">Name</th>
-              <th className="px-4 py-3 text-left font-mono">Desk</th>
-              {/* <th className="px-4 py-3 text-left font-mono">Seat</th> */}
+              <th className="px-4 py-3 text-left font-mono">Customer Name</th>
+              <th className="px-4 py-3 text-left font-mono">Seat</th>
               <th className="px-4 py-3 text-left font-mono">Start Time</th>
               <th className="px-4 py-3 text-left font-mono">End Time</th>
-              <th className="px-4 py-3 text-left font-mono">Duration</th>
+              <th className="px-4 py-3 text-left font-mono">Date Of Booking</th>
               <th className="px-4 py-3 text-left font-mono">Booked At</th>
             </tr>
           </thead>
@@ -157,16 +178,15 @@ export default function AdminPage() {
                 // Use correct property names per your Firestore structure
                 const startTime = formatToHHMM(b.startTimestamp);
                 const endTime = formatToHHMM(b.endTimestamp);
-                const duration = getDuration(startTime, endTime);
+                const dateOfBooking = formatDate(b.startTimestamp);
                 return (
                   <tr key={b.id} className="hover:bg-sky-50 transition">
                     <td className="px-4 py-2 font-mono">{b.id}</td>
-                    <td className="px-4 py-2 font-mono">{b.userId}</td>
+                    <td className="px-4 py-2 font-mono">{b.name}</td>
                     <td className="px-4 py-2 font-mono">{b.deskId}</td>
-                    {/* REMOVED SEAT FIELD */}
                     <td className="px-4 py-2 font-mono">{startTime}</td>
                     <td className="px-4 py-2 font-mono">{endTime}</td>
-                    <td className="px-4 py-2 font-mono">{duration}</td>
+                    <td className="px-4 py-2 font-mono">{dateOfBooking}</td>
                     <td className="px-4 py-2 font-mono">{formatDateTime(b.createdAt)}</td>
                   </tr>
                 );
