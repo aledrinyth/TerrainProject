@@ -320,14 +320,14 @@ export default function App() {
   const [successMessage, setSuccessMessage] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Get current user from the provided login, this is currently hardcoded
-  // In a real app, this would come from auth context or similar
-  // For demo purposes, we use a fixed username
-  const currentUser = 'maminuddin';
+  // No longer hard coded user
+  const { user , logout } = useAuth();
+  const currentUser = user?.uid || 'unknown';
+  const currentUserName = user?.displayName || user?.email?.split('@')[0] || 'User';
 
   // API base URL, environment variable or hardcoded for now
   // In production, this should be set via environment variables
-  const API_BASE_URL = 'http://localhost:6969/api';
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:6969/api";
 
   // Helper function to create proper local datetime
   const createLocalDateTime = (date, time) => {
@@ -485,7 +485,7 @@ export default function App() {
         const endDateTime = createLocalDateTime(bookingData.date, bookingData.endTime);
         
         const requestData = {
-          name: bookingData.userId,
+          name: currentUserName,
           userId: bookingData.userId,
           deskId: deskId,
           startTimestamp: startDateTime.toISOString(),
