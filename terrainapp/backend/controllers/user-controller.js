@@ -130,6 +130,11 @@ const getUserByEmail = async (req, res) => {
 
     } catch (error) {
         logger.error("Error getting users by name: " + error);
+        if (error.code === "auth/user-not-found") {
+            return res.status(400).json({
+                error: "User not found."
+            });
+        }
         return res.status(500).json({
             error: "Internal server error"
         });
@@ -193,6 +198,11 @@ const getUserById = async (req, res) => {
 
     } catch (error) {
         logger.error("Error getting user by id: " + error);
+        if (error.code === "auth/user-not-found") {
+            return res.status(400).json({
+                error: "User not found."
+            });
+        }
         return res.status(500).json({
             error: "Internal server error"
         });
@@ -256,6 +266,11 @@ const getUserByPhoneNumber = async (req, res) => {
 
     } catch (error) {
         logger.error("Error getting user by id: " + error);
+        if (error.code === "auth/user-not-found") {
+            return res.status(400).json({
+                error: "User not found."
+            });
+        }
         return res.status(500).json({
             error: "Internal server error"
         });
