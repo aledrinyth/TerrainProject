@@ -1,6 +1,7 @@
 const logger = require("../logger.js")
 const express = require("express");
 const { db } = require("../config/firebase.js");
+const { getAuth } = require("../config/firebase");
 
 /**
  * Summary: Creates a desk.
@@ -14,7 +15,9 @@ const { db } = require("../config/firebase.js");
  * createDesk(req, res);
  */
 const createDesk = async (req, res) => {
-    const { name, seats, roomId, positionX, positionY, isBooked} = req.body;
+    const { name, seats, roomId, positionX, positionY } = req.body;
+    // Extract the token from the header
+    const token = req.headers.authorization?.split("Bearer ")[1];
     
     try {
         // Validation
@@ -24,6 +27,23 @@ const createDesk = async (req, res) => {
             });
         }
 
+        // Check if there is a token
+        if (!token) {
+            return res.status(401).json({
+                error: "Authorisation token required."
+            });
+        }
+
+        // Check if admin
+        const decodedToken = await getAuth().verifyIdToken(token);
+
+        // Check the claim directly on the token
+        if (decodedToken.admin !== true){
+            return res.status(403).json({
+                error: "Delete user can only be done by admin."
+            })
+        }
+
         // Add desk to "desks" collection
         const deskRef = await db.collection("desks").add({
             name: name,
@@ -31,7 +51,6 @@ const createDesk = async (req, res) => {
             seats: seats,
             positionX: positionX || 0,
             positionY: positionY || 0,
-            isBooked: isBooked || false,
             createdAt: new Date()
         });
 
@@ -44,8 +63,7 @@ const createDesk = async (req, res) => {
                 roomId: roomId,
                 seats: seats,
                 positionX: positionX || 0,
-                positionY: positionY || 0,
-                isBooked: isBooked || false,
+                positionY: positionY || 0
             }
         });
 
@@ -215,11 +233,31 @@ const getAllDesks = async (req, res) => {
  */
 const updateDesk = async (req, res) => {
     const { id } = req.params;
-    const { name, seats, roomId, positionX, positionY, isBooked } = req.body;
+    const { name, seats, roomId, positionX, positionY } = req.body;
+    // Extract the token from the header
+    const token = req.headers.authorization?.split("Bearer ")[1];
+
     try {
         // Validation
         if (!id) {
             return res.status(400).json({ error: "id is required." });
+        }
+
+        // Check if there is a token
+        if (!token) {
+            return res.status(401).json({
+                error: "Authorisation token required."
+            });
+        }
+
+        // Check if admin
+        const decodedToken = await getAuth().verifyIdToken(token);
+
+        // Check the claim directly on the token
+        if (decodedToken.admin !== true){
+            return res.status(403).json({
+                error: "Delete user can only be done by admin."
+            })
         }
 
         // Ensure only update the specified parameters
@@ -229,7 +267,6 @@ const updateDesk = async (req, res) => {
         if (roomId != undefined) updateData.roomId = roomId;
         if (positionX != undefined) updateData.positionX = positionX;
         if (positionY != undefined) updateData.positionY = positionY;
-        if (isBooked != undefined) updateData.isBooked = isBooked;
         updateData.updatedAt = new Date();
 
         // Update desk with the specified information
@@ -273,10 +310,30 @@ const updateDesk = async (req, res) => {
  */
 const deleteDesk = async (req, res) => {
     const { id } = req.params;
+    // Extract the token from the header
+    const token = req.headers.authorization?.split("Bearer ")[1];
+    
     try {
         // Validation
         if (!id) {
             return res.status(400).json({ error: "id is required." });
+        }
+
+        // Check if there is a token
+        if (!token) {
+            return res.status(401).json({
+                error: "Authorisation token required."
+            });
+        }
+
+        // Check if admin
+        const decodedToken = await getAuth().verifyIdToken(token);
+
+        // Check the claim directly on the token
+        if (decodedToken.admin !== true){
+            return res.status(403).json({
+                error: "Delete user can only be done by admin."
+            })
         }
 
         // Update desk with the specified information

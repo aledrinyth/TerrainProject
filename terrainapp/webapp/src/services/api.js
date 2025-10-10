@@ -1,3 +1,5 @@
+import { auth } from '../../firebase';
+
 //const logger = require("../logger.js")
 
 //const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:6969/api"; // no .env file yet, but needed later after local dev
@@ -6,9 +8,21 @@ const API_BASE_URL = "http://localhost:6969/api";
 export const apiRequest = async (endpoint, options = {}) => {
     const url = `${API_BASE_URL}${endpoint}`;
 
+    // Get current user's token if available
+    let authHeaders = {};
+    if (auth.currentUser) {
+        try {
+            const token = await auth.currentUser.getIdToken();
+            authHeaders.Authorization = `Bearer ${token}`;
+        } catch (error) {
+            console.warn("Could not get auth token:", error);
+        }
+    }
+
     const config = {
         headers: {
             "Content-Type": "application/json",
+            ...authHeaders,
             ...options.headers,
         },
         ...options,
