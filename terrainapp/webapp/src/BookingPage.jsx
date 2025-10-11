@@ -241,20 +241,20 @@ export default function BookingPage() {
           )}
         </div>
         
-        {/* Button to navigate to My Current Bookings */}
-        <button 
-          onClick={handleViewMyBookings}
-          className="px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors font-mono font-semibold"
-        >
-          View My Current Bookings
-        </button>
-
         <button 
           onClick={() => setIsBookingModalOpen(true)}
           className="px-6 py-2 bg-sky-400 text-white rounded-lg hover:bg-sky-500 transition-colors"
           disabled={!selectedDate}
         >
           New Booking
+        </button>
+        
+        {/* Button to navigate to My Current Bookings (moved below New Booking) */}
+        <button 
+          onClick={handleViewMyBookings}
+          className="px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors font-mono font-semibold"
+        >
+          View My Current Bookings
         </button>
       </div>
       {/*Combined desk layout with Kitchen*/}
