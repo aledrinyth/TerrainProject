@@ -1,15 +1,14 @@
 import React from 'react';
-
 import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from '../components/ProtectedRoute';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
-// Mock Firebase Auth
-jest.mock('firebase/auth', () => ({
-  getAuth: jest.fn(),
-  onAuthStateChanged: jest.fn(),
+// Mock the AuthContext used by ProtectedRoute
+jest.mock('../contexts/AuthContext.jsx', () => ({
+  useAuth: jest.fn(),
 }));
+
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 describe('ProtectedRoute (JSX)', () => {
   beforeEach(() => {
@@ -17,53 +16,59 @@ describe('ProtectedRoute (JSX)', () => {
   });
 
   it('shows "Loading..." initially', () => {
-    onAuthStateChanged.mockImplementation(() => () => {});
+    // Simulate loading state
+    useAuth.mockReturnValue({ user: null, loading: true });
+
     render(
       <MemoryRouter>
-        <ProtectedRoute>
-          <div>Protected Content</div>
-        </ProtectedRoute>
+        <Routes>
+          <Route element={<ProtectedRoute />}>
+            <Route path="/" element={<div>Protected Content</div>} />
+          </Route>
+        </Routes>
       </MemoryRouter>
     );
 
     expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
   });
 
-  it('redirects unauthenticated users to "/"', async () => {
-    onAuthStateChanged.mockImplementation((auth, callback) => {
-      callback(null); // no user
-      return () => {};
-    });
+  it('redirects unauthenticated users to "/login"', async () => {
+    useAuth.mockReturnValue({ user: null, loading: false });
 
     render(
-      <MemoryRouter>
-        <ProtectedRoute>
-          <div>Protected Content</div>
-        </ProtectedRoute>
+      <MemoryRouter initialEntries={['/protected']}>
+        <Routes>
+          <Route path="/login" element={<div>Login Page</div>} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/protected" element={<div>Protected Content</div>} />
+          </Route>
+        </Routes>
       </MemoryRouter>
     );
 
-    await waitFor(() => {
-      expect(screen.queryByText(/Protected Content/i)).toBeNull();
-    });
+    await waitFor(() =>
+      expect(screen.getByText(/Login Page/i)).toBeInTheDocument()
+    );
   });
 
   it('renders children when authenticated', async () => {
-    onAuthStateChanged.mockImplementation((auth, callback) => {
-      callback({ uid: '123', email: 'test@example.com' }); // mock user
-      return () => {};
+    useAuth.mockReturnValue({
+      user: { uid: '123', email: 'test@example.com' },
+      loading: false,
     });
 
     render(
-      <MemoryRouter>
-        <ProtectedRoute>
-          <div>Protected Content</div>
-        </ProtectedRoute>
+      <MemoryRouter initialEntries={['/protected']}>
+        <Routes>
+          <Route element={<ProtectedRoute />}>
+            <Route path="/protected" element={<div>Protected Content</div>} />
+          </Route>
+        </Routes>
       </MemoryRouter>
     );
 
-    await waitFor(() => {
-      expect(screen.getByText(/Protected Content/i)).toBeInTheDocument();
-    });
+    await waitFor(() =>
+      expect(screen.getByText(/Protected Content/i)).toBeInTheDocument()
+    );
   });
 });
