@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.jsx'; // Import useAuth
 
 /**
  * Summary: Reused Logo component to display the Terrain logo.
@@ -71,6 +72,7 @@ export default function CustomerBookingPOV() {
   const [bookings, setBookings] = useState([]);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const navigate = useNavigate();
+  const { signout } = useAuth(); // Destructure signout from useAuth
 
   useEffect(() => {
     // In real app, fetch bookings from API here
@@ -94,12 +96,21 @@ export default function CustomerBookingPOV() {
     setDeleteConfirm(null);
   };
   
-  // Dummy logout function
-  const handleLogout = () => {
-    // Implement actual logout logic here, e.g., clearing tokens and redirecting
-    alert("Logged out!");
+  /**
+   * Summary: Handles user logout and navigates to the login page.
+   * @returns {void}
+   */
+  const handleLogout = async () => {
+    try {
+        await signout();
+        navigate('/login');
+    } catch (error) {
+        console.error("Logout failed:", error);
+        alert("Logout failed. Check console for details.");
+    }
   };
-  // Navigate to booking page (no routing yet)
+  
+  // Navigate back to the booking page
   const handleNavigateToBooking = () => {
     navigate('/booking');
   };
@@ -108,7 +119,7 @@ export default function CustomerBookingPOV() {
     <div className="relative flex flex-col items-center justify-center min-h-screen font-sans bg-gray-100 p-4 pt-24">
       <header className="absolute top-[24px] left-[34px] flex items-center w-[calc(100vw-68px)] justify-between pr-20">
         <Logo />
-        {/* Logout button moved left, within boundaries */}
+        {/* Logout button uses implemented logic */}
         <button
           onClick={handleLogout}
           className="px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-500 transition-colors"

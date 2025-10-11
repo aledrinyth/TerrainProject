@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import Login from './Login.jsx';
 import BookingPage from './BookingPage.jsx';
 import AdminPage from './AdminPage.jsx';
+import CustomerBookingPOV from './CustomerBookingPOV.jsx'; // Import the new page
 
 // Protected Route Component
 import ProtectedRoute from '../components/ProtectedRoute.jsx';
@@ -28,6 +29,7 @@ export default function App() {
       {/* Protected Routes */}
       <Route element={<ProtectedRoute />}>
         <Route path="/booking" element={<BookingPage />} />
+        <Route path="/my-bookings" element={<CustomerBookingPOV />} /> {/* New route added */}
         <Route path="/admin" element={<AdminPage />} />
       </Route>
     </Routes>

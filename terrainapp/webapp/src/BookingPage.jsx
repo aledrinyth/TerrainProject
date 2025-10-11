@@ -3,7 +3,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 
-// A reusable component for the green/red seat indicators.
+/**
+ * A reusable component for the green/red seat indicators.
+ * @returns {JSX.Element} The seat circle element.
+ */
 const SeatCircle = ({ seatNumber, isBooked, isSelected, onSelect, isLoading }) => {
   // This code block determines the colors based on state
   let bgColor, borderColor, cursor;
@@ -12,16 +15,19 @@ const SeatCircle = ({ seatNumber, isBooked, isSelected, onSelect, isLoading }) =
     borderColor = "border-gray-300";
     cursor = "cursor-wait";
   } else if (isBooked) {
+    // Red for booked seats
     bgColor = "bg-red-400";
     borderColor = "border-red-600";
     cursor = "cursor-not-allowed";
   } else if (isSelected) {
+    // Indigo for selected seats
     bgColor = "bg-indigo-600";
     borderColor = "border-indigo-800";
     cursor = "cursor-pointer";
   } else {
-    bgColor = "bg-green-400";
-    borderColor = "border-green-600";
+    // Green/Sky for available seats
+    bgColor = "bg-sky-400";
+    borderColor = "border-sky-700";
     cursor = "cursor-pointer";
   }
 
@@ -209,7 +215,7 @@ const Desk = ({ deskName, seatNumberOffset = 0, seatAvailability, selectedSeats,
   const seatNumbers = [1, 2, 3, 4].map(n => n + seatNumberOffset);
   
   return (
-    <div className="w-full md:w-[545px] h-[459px] bg-gray-200 border-2 border-black rounded-lg flex flex-col p-6">
+    <div className="w-full md:w-[545px] h-[459px] bg-desk-fill border-2 border-black rounded-26px flex flex-col p-6">
       <h3 className="font-mono text-3xl font-bold text-center mb-6">{deskName}</h3>
       
       <div className="flex-grow flex items-center justify-center gap-8 w-full">
@@ -233,8 +239,8 @@ const Desk = ({ deskName, seatNumberOffset = 0, seatAvailability, selectedSeats,
 
         {/* Monitors */}
         <div className="flex gap-4">
-          <div className="w-[100px] h-[229px] bg-gray-400 border-2 border-black rounded-lg"></div>
-          <div className="w-[100px] h-[229px] bg-gray-400 border-2 border-black rounded-lg"></div>
+          <div className="w-[100px] h-[229px] bg-monitor-fill border-2 border-black rounded-17px"></div>
+          <div className="w-[100px] h-[229px] bg-monitor-fill border-2 border-black rounded-17px"></div>
         </div>
 
         {/* Right Seats */}
@@ -277,13 +283,13 @@ const Logo = () => {
 // Kitchen component
 const Kitchen = () => {
   return (
-    <div className="w-[150px] h-[459px] bg-gray-200 border-2 border-black rounded-lg flex items-center justify-center">
+    <div className="w-[150px] h-[459px] bg-gray-200 border-2 border-black rounded-26px flex items-center justify-center">
       <span className="font-mono text-3xl font-bold transform -rotate-90 whitespace-nowrap">Kitchen</span>
     </div>
   );
 };
 
-// Success notification component
+// Success notification component (assuming this was part of the changes on main or a merged branch)
 const SuccessNotification = ({ message, isVisible, onClose }) => {
   useEffect(() => {
     if (isVisible) {
@@ -309,7 +315,7 @@ const SuccessNotification = ({ message, isVisible, onClose }) => {
  * Summary: The main component for the booking page layout and functionality.
  * @returns {JSX.Element} The BookingPage component.
  */
-export default function App() {
+export default function BookingPage() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
@@ -320,46 +326,35 @@ export default function App() {
   const [successMessage, setSuccessMessage] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // No longer hard coded user
-  const { user , logout } = useAuth();
+  // Use authentication hooks
+  const navigate = useNavigate();
+  const { user, signout } = useAuth();
   const currentUser = user?.uid || 'unknown';
   const currentUserName = user?.displayName || user?.email?.split('@')[0] || 'User';
 
   // API base URL, environment variable or hardcoded for now
-  // In production, this should be set via environment variables
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:6969/api";
+  const API_BASE_URL = "http://localhost:6969/api";
 
   // Helper function to create proper local datetime
   const createLocalDateTime = (date, time) => {
     // Create a date object in local timezone (NOT UTC)
     const dateTime = new Date(`${date}T${time}:00`);
-    
-    // Log for debugging
-    console.log(`Creating local datetime: ${date}T${time}:00`);
-    console.log(`Result: ${dateTime.toString()}`);
-    console.log(`ISO String: ${dateTime.toISOString()}`);
-    
     return dateTime;
   };
+
   // Fetch seat availability for a specific date - ENHANCED to get real booking data
   const fetchSeatAvailability = async (date) => {
     setIsLoadingAvailability(true);
     try {
-      console.log(`Fetching availability for date: ${date}`);
-      
-      // Try to fetch existing bookings for the date to determine availability
-      const response = await fetch(`${API_BASE_URL}/bookings?date=${date}`, {
+      const response = await fetch(`${API_BASE_URL}/booking/by-start-time?startTimestamp=${encodeURIComponent(date)}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
 
-      console.log('Bookings response status:', response.status);
-      
       if (!response.ok) {
-        console.error('Could not fetch bookings, using fallback availability');
-        // Use fallback - all seats available
+        // Assume all available on error if not a 404 (or handle 404 response body specifically)
         const fallbackAvailability = {};
         for (let i = 1; i <= 8; i++) {
           fallbackAvailability[i] = true;
@@ -369,9 +364,7 @@ export default function App() {
       }
       
       const bookingsData = await response.json();
-      console.log('Bookings response data:', bookingsData);
       
-      // Process bookings to determine seat availability
       const availability = {};
       const totalSeats = 8;
       
@@ -381,50 +374,16 @@ export default function App() {
       }
       
       // Mark booked seats as unavailable
-      if (bookingsData && Array.isArray(bookingsData)) {
-        bookingsData.forEach(booking => {
-          // Check if booking is for the selected date and is active
-          if (booking.status === 'active') {
-            // Convert booking date to compare with selected date
-            let bookingDate;
-            if (booking.startTimestamp) {
-              bookingDate = new Date(booking.startTimestamp).toISOString().split('T')[0];
-            } else if (booking.date) {
-              bookingDate = booking.date;
-            }
-            
-            if (bookingDate === date && booking.deskId) {
-              // Mark this seat as booked
-              availability[booking.deskId] = false;
-              console.log(`Seat ${booking.deskId} is booked on ${date}`);
-            }
-          }
-        });
-      } else if (bookingsData && bookingsData.bookings) {
-        // Handle if API returns { bookings: [...] }
-        bookingsData.bookings.forEach(booking => {
-          if (booking.status === 'active') {
-            let bookingDate;
-            if (booking.startTimestamp) {
-              bookingDate = new Date(booking.startTimestamp).toISOString().split('T')[0];
-            } else if (booking.date) {
-              bookingDate = booking.date;
-            }
-            
-            if (bookingDate === date && booking.deskId) {
-              availability[booking.deskId] = false;
-              console.log(`Seat ${booking.deskId} is booked on ${date}`);
-            }
-          }
-        });
-      }
+      const activeBookings = bookingsData.bookings || [];
+      activeBookings.forEach(booking => {
+          // Assuming deskId corresponds to the seat number (1-8)
+          availability[booking.deskId] = false;
+      });
       
-      console.log('Final seat availability:', availability);
       setSeatAvailability(availability);
       
     } catch (error) {
-      console.error('Error fetching seat availability:', error);
-      // Show all seats as available on error (fallback)
+      // Catch network or generic errors
       const fallbackAvailability = {};
       for (let i = 1; i <= 8; i++) {
         fallbackAvailability[i] = true;
@@ -466,13 +425,15 @@ export default function App() {
       // Auto-open booking modal when seats are selected
       if (newSelection.length > 0) {
         setIsBookingModalOpen(true);
+      } else {
+        setIsBookingModalOpen(false);
       }
       
       return newSelection;
     });
   };
 
-  // Handle booking submission - no longer sends name field
+  // Handle booking submission - now uses deskId as seat number
   const handleBookingSubmit = async (bookingData) => {
     setIsSubmittingBooking(true);
     try {
@@ -487,13 +448,10 @@ export default function App() {
         const requestData = {
           name: currentUserName,
           userId: bookingData.userId,
-          deskId: deskId,
+          deskId: deskId.toString(), // Sending deskId as string
           startTimestamp: startDateTime.toISOString(),
           endTimestamp: endDateTime.toISOString()
         };
-
-        console.log(`Creating booking for seat ${seatNumber}:`, requestData);
-        console.log(`Local times: ${startDateTime.toString()} to ${endDateTime.toString()}`);
 
         const response = await fetch(`${API_BASE_URL}/booking`, {
           method: 'POST',
@@ -503,22 +461,16 @@ export default function App() {
           body: JSON.stringify(requestData),
         });
 
-        console.log(`Booking response for seat ${seatNumber} status:`, response.status);
-
         if (!response.ok) {
-          const errorData = await response.text();
-          console.error(`Booking failed for seat ${seatNumber}:`, errorData);
-          throw new Error(`Booking failed for seat ${seatNumber}: ${response.status} - ${errorData}`);
+          const errorData = await response.json();
+          throw new Error(`Booking failed for seat ${seatNumber}: ${errorData.error || response.statusText}`);
         }
 
-        const result = await response.json();
-        console.log(`Booking successful for seat ${seatNumber}:`, result);
-        return result;
+        return await response.json();
       });
 
       // Wait for all bookings to complete
       const results = await Promise.all(bookingPromises);
-      console.log('All bookings successful:', results);
       
       // Show success message
       setSuccessMessage(`Successfully booked ${bookingData.seats.length} seat(s) for ${bookingData.date}`);
@@ -552,6 +504,14 @@ export default function App() {
     }
   };
 
+  /**
+   * Summary: Handles navigation to the user's current bookings page.
+   * @returns {void}
+   */
+  const handleViewMyBookings = () => {
+    navigate('/my-bookings');
+  }
+
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen font-sans bg-gray-100 p-4 pt-24">
       {/* Success Notification */}
@@ -574,7 +534,7 @@ export default function App() {
         </button>
       </header>
       
-      {/* Date selection controls */}
+      {/* Date selection controls and action buttons */}
       <div className="flex flex-col items-center gap-4 mb-14">
         <div className="relative">
           <button
@@ -602,6 +562,22 @@ export default function App() {
             Selected: {selectedSeats.length} seat(s) - {selectedSeats.join(', ')}
           </div>
         )}
+        
+        <button 
+          onClick={() => setIsBookingModalOpen(true)}
+          className="px-6 py-2 bg-sky-400 text-white rounded-lg hover:bg-sky-500 transition-colors"
+          disabled={!selectedDate || selectedSeats.length === 0}
+        >
+          New Booking
+        </button>
+        
+        {/* Button to navigate to My Current Bookings */}
+        <button 
+          onClick={handleViewMyBookings}
+          className="px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors font-mono font-semibold"
+        >
+          View My Current Bookings
+        </button>
       </div>
 
       {/* Combined desk layout with Kitchen */}
@@ -631,7 +607,11 @@ export default function App() {
       {/* Booking Modal */}
       <BookingModal 
         isOpen={isBookingModalOpen} 
-        onClose={() => setIsBookingModalOpen(false)}
+        onClose={() => {
+          setIsBookingModalOpen(false);
+          // If the modal is closed without booking, deselect all seats
+          setSelectedSeats([]);
+        }}
         selectedDate={selectedDate}
         selectedSeats={selectedSeats}
         onBookingSubmit={handleBookingSubmit}

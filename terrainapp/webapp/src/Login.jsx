@@ -61,8 +61,13 @@ export default function Login() {
       }
 
     } catch (error) {
-      const errorMessage = error.message;
-      console.error("Login failed:", errorMessage);
+      // Check for common authentication errors
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        alert('Login failed: Invalid email or password. Please try again.');
+      } else {
+        console.error("Login failed:", error.message);
+        alert('An unknown error occurred during login. Please check the console.');
+      }
     }
   };
 
@@ -102,5 +107,3 @@ export default function Login() {
     </div>
   );
 }
-
-
