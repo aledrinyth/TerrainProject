@@ -10,7 +10,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 const SeatCircle = ({ seatNumber, isBooked }) => {
   const [isSelected, setIsSelected] = useState(false);
 
-  // This code block determines the colors based on state (to be implemented later with the booking).
+  // This code block determines the colors based on state.
   let bgColor, borderColor;
   if (isBooked) {
     bgColor = "bg-gray-300";
@@ -195,6 +195,14 @@ export default function BookingPage() {
     }
   };
 
+  /**
+   * Summary: Handles navigation to the user's current bookings page.
+   * @returns {void}
+   */
+  const handleViewMyBookings = () => {
+    navigate('/my-bookings');
+  }
+
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen font-sans bg-gray-100 p-4 pt-24">
       {/* The header is positioned absolutely relative to the main container */}
@@ -232,6 +240,15 @@ export default function BookingPage() {
             />
           )}
         </div>
+        
+        {/* Button to navigate to My Current Bookings */}
+        <button 
+          onClick={handleViewMyBookings}
+          className="px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors font-mono font-semibold"
+        >
+          View My Current Bookings
+        </button>
+
         <button 
           onClick={() => setIsBookingModalOpen(true)}
           className="px-6 py-2 bg-sky-400 text-white rounded-lg hover:bg-sky-500 transition-colors"

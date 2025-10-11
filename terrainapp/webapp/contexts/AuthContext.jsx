@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useContext, createContext } from 'react';
 import { auth } from '../firebase';
-import { onAuthStateChanged, getIdTokenResult, signOut } from 'firebase/auth'; // <-- ADD signOut
+import { onAuthStateChanged, getIdTokenResult, signOut } from 'firebase/auth';
 
 // Auth Context
-// This context will hold the authentication state and be accessible by child components.
+// This context holds the authentication state and is accessible by child components.
 const authContext = createContext();
 
 // Provider Component
-// This component will wrap your application and provide the auth context to its children.
+// This component wraps the application and provides the auth context to its children.
 export function ProvideAuth({ children }) {
   const authData = useProvideAuth();
   return (
@@ -17,17 +17,16 @@ export function ProvideAuth({ children }) {
   );
 }
 
-// Custom hook that components will use
-// This hook simplifies accessing the auth context data.
+// Custom hook that components will use to access the auth context.
 export const useAuth = () => {
   return useContext(authContext);
 };
 
-// Create the hook that contains all the authentication logic
+// Hook containing all the authentication logic.
 function useProvideAuth() {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true); // Add a loading state
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // onAuthStateChanged returns an unsubscribe function
@@ -36,7 +35,7 @@ function useProvideAuth() {
         // User is signed in.
         const idTokenResult = await getIdTokenResult(firebaseUser);
         const userIsAdmin = idTokenResult.claims.admin === true;
-
+        
         // Set the user object and their admin status in state
         setUser(firebaseUser);
         setIsAdmin(userIsAdmin);
@@ -50,11 +49,10 @@ function useProvideAuth() {
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, []); // Empty dependency array means this effect runs once on mount
+  }, []);
 
-  // sign-in, sign-out functions should probably go here in the future
   const signout = () => {
-    return signOut(auth); // State will be updated by the onAuthStateChanged listener
+    return signOut(auth);
   };
 
   // Return the user state and any auth methods you want to expose
@@ -62,6 +60,6 @@ function useProvideAuth() {
     user,
     isAdmin,
     loading,
-    signout, // EXPOSE signout
+    signout,
   };
 }
