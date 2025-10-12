@@ -106,7 +106,7 @@ export default function CustomerBookingPOV() {
         navigate('/login');
     } catch (error) {
         console.error("Logout failed:", error);
-        alert("Logout failed. Check console for details.");
+        alert("Logout failed. Please try again later.");
     }
   };
   
