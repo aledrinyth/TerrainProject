@@ -128,36 +128,45 @@ export default function CustomerBookingPOV() {
           Logout
         </button>
       </header>      
-      <h1 className="text-3xl font-bold mb-12 mt-8 font-mono">My Bookings</h1>
+      {/* Removed font-mono to use font-sans */}
+      <h1 className="text-3xl font-bold mb-12 mt-8">My Bookings</h1> 
+      {/* Removed font-mono */}
       <button onClick={handleNavigateToBooking} 
-      className="px-6 py-3 bg-sky-400 text-white rounded-lg hover:bg-sky-500 transition-colors font-mono font-semibold mb-8">
+      className="px-6 py-3 bg-sky-400 text-white rounded-lg hover:bg-sky-500 transition-colors font-semibold mb-8">
         Create New Booking
       </button>
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-md border border-gray-200 p-8">
         <table className="w-full table-auto">
           <thead>
             <tr className="bg-gray-200">
-              <th className="px-4 py-3 text-left font-mono">Date</th>
-              <th className="px-4 py-3 text-left font-mono">Chair</th>
-              <th className="px-4 py-3 text-left font-mono">Action</th>
+              {/* Removed font-mono */}
+              <th className="px-4 py-3 text-left">Date</th> 
+              {/* Removed font-mono */}
+              <th className="px-4 py-3 text-left">Chair</th> 
+              {/* Removed font-mono */}
+              <th className="px-4 py-3 text-left">Action</th> 
             </tr>
           </thead>
           <tbody>
             {bookings.length === 0 ? (
               <tr>
-                <td colSpan={3} className="text-center py-8 text-gray-500 font-mono">
+                {/* Removed font-mono */}
+                <td colSpan={3} className="text-center py-8 text-gray-500"> 
                   No bookings found.
                 </td>
               </tr>
             ) : (
               bookings.map((b) => (
                 <tr key={b.id} className="hover:bg-sky-50 transition">
-                  <td className="px-4 py-2 font-mono">{formatDate(b.createdAt)}</td>
-                  <td className="px-4 py-2 font-mono">{b.seatNumber}</td>
-                  <td className="px-4 py-2 font-mono">
+                  {/* Removed font-mono */}
+                  <td className="px-4 py-2">{formatDate(b.createdAt)}</td> 
+                  {/* Removed font-mono */}
+                  <td className="px-4 py-2">{b.seatNumber}</td> 
+                  {/* Removed font-mono */}
+                  <td className="px-4 py-2"> 
                     <button
                       onClick={() => handleDeleteClick(b)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-mono transition"
+                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition"
                     >
                       Delete
                     </button>
@@ -173,19 +182,20 @@ export default function CustomerBookingPOV() {
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-bold mb-4 font-mono text-center">
+            {/* Removed font-mono */}
+            <h3 className="text-lg font-bold mb-4 text-center"> 
               Delete booking for {formatDate(deleteConfirm.createdAt)}?
             </h3>
             <div className="flex justify-center space-x-4">
               <button
                 onClick={handleConfirmDelete}
-                className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded font-mono transition"
+                className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded transition"
               >
                 Confirm
               </button>
               <button
                 onClick={handleCancelDelete}
-                className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded font-mono transition"
+                className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded transition"
               >
                 Cancel
               </button>
