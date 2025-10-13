@@ -2,10 +2,6 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { bookingService } from './services/bookingService';
 
-/**
- * Summary: Reused Logo component to display the Terrain logo.
- * @returns {JSX.Element}
- */
 const Logo = () => {
   return (
     <img
@@ -17,12 +13,6 @@ const Logo = () => {
   );
 };
 
-/**
- * Summary: Calculate duration between start and end times.
- * @param {*} start - start time in "HH:MM" format
- * @param {*} end - end time in "HH:MM" format
- * @returns {string} - duration in "Xh Ym" format
- */
 function getDuration(start, end) {
   if (typeof start !== "string" || typeof end !== "string") return "";
   const [sh, sm] = start.split(":").map(Number);
@@ -54,11 +44,6 @@ function formatToHHMM(ts) {
     : date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
-/**
- * Summary: Format date to locale date string.
- * @param {string|object|number} ts - timestamp in various formats
- * @returns {string} - formatted date string
- */
 function formatDate(ts) {
   let date;
   if (!ts) return "N/A";
@@ -76,10 +61,6 @@ function formatDate(ts) {
     : date.toLocaleDateString();
 }
 
-/**
- * Summary: AdminPage component to display current bookings in a table format.
- * @returns {JSX.Element} AdminPage component displaying current bookings in a table.
- */
 export default function AdminPage() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -110,7 +91,7 @@ export default function AdminPage() {
     fetchBookings();
   }, []);
 
-    function formatDateTime(ts) {
+  function formatDateTime(ts) {
     let date;
     if (!ts) return "N/A";
     if (typeof ts === "number") {
@@ -126,34 +107,31 @@ export default function AdminPage() {
   }
 
   function formatTime(timestampObj) {
-  let date;
-  if (!timestampObj) return "N/A";
-  if (typeof timestampObj === "number") {
-    // If stored as milliseconds
-    date = new Date(timestampObj);
-  } else if (
-    typeof timestampObj === "object" &&
-    "_seconds" in timestampObj
-  ) {
-    date = new Date(timestampObj._seconds * 1000);
-  } else if (typeof timestampObj === "string") {
-    date = new Date(timestampObj);
-  } else {
-    return "N/A";
+    let date;
+    if (!timestampObj) return "N/A";
+    if (typeof timestampObj === "number") {
+      date = new Date(timestampObj);
+    } else if (
+      typeof timestampObj === "object" &&
+      "_seconds" in timestampObj
+    ) {
+      date = new Date(timestampObj._seconds * 1000);
+    } else if (typeof timestampObj === "string") {
+      date = new Date(timestampObj);
+    } else {
+      return "N/A";
+    }
+    return isNaN(date.getTime()) ? "Invalid date" : date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
   }
-  return isNaN(date.getTime()) ? "Invalid date" : date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
-}
-        
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen font-sans bg-gray-100 p-4 pt-24">
-      {/* Logo header positioned absolutely like in BookingPage.jsx */}
       <header className="absolute top-[24px] left-[34px]">
         <Logo />
       </header>
       <h1 className="text-3xl font-bold mb-12 mt-8 font-mono">Admin: Current Bookings</h1>
 
-      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-md border border-gray-200 p-8 overflow-x-auto">
+      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-md border border-gray-200 p-8 overflow-x-auto">
         <table className="w-full table-auto">
           <thead>
             <tr className="bg-gray-200">
@@ -164,18 +142,18 @@ export default function AdminPage() {
               <th className="px-4 py-3 text-left font-mono">End Time</th>
               <th className="px-4 py-3 text-left font-mono">Date Of Booking</th>
               <th className="px-4 py-3 text-left font-mono">Booked At</th>
+              <th className="px-4 py-3 text-left font-mono">Status</th>
             </tr>
           </thead>
           <tbody>
             {bookings.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-8 text-gray-500 font-mono">
+                <td colSpan={8} className="text-center py-8 text-gray-500 font-mono">
                   No bookings found.
                 </td>
               </tr>
             ) : (
               bookings.map((b) => {
-                // Use correct property names per your Firestore structure
                 const startTime = formatToHHMM(b.startTimestamp);
                 const endTime = formatToHHMM(b.endTimestamp);
                 const dateOfBooking = formatDate(b.startTimestamp);
@@ -188,6 +166,7 @@ export default function AdminPage() {
                     <td className="px-4 py-2 font-mono">{endTime}</td>
                     <td className="px-4 py-2 font-mono">{dateOfBooking}</td>
                     <td className="px-4 py-2 font-mono">{formatDateTime(b.createdAt)}</td>
+                    <td className="px-4 py-2 font-mono">{b.status || "active"}</td>
                   </tr>
                 );
               })

@@ -1,125 +1,117 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext.jsx'; // Import useAuth
+import { useAuth } from '../contexts/AuthContext.jsx';
+import { bookingService } from './services/bookingService';
 
-/**
- * Summary: Reused Logo component to display the Terrain logo.
- * @returns {JSX.Element}
- */
-const Logo = () => {
-  return (
-    <img
-      width="557"
-      height="104"
-      src="/terrain.svg"
-      alt="Terrain Logo"
-    />
-  );
-};
+const Logo = () => (
+  <img width="557" height="104" src="/terrain.svg" alt="Terrain Logo" />
+);
 
-/**
- * Mock bookings data for demonstration purposes.
- */
-const mockBookings = [
-  {
-    id: 1,
-    userId: "user_0101",
-    desk: "DESK 1",
-    seatNumber: 2,
-    startTime: "09:00",
-    endTime: "11:00",
-    createdAt: "2025-09-24T01:30:00Z",
-  },
-  {
-    id: 2,
-    userId: "user_0202",
-    desk: "DESK 2",
-    seatNumber: 3,
-    startTime: "10:00",
-    endTime: "13:00",
-    createdAt: "2025-09-24T03:00:00Z",
-  },
-  {
-    id: 3,
-    userId: "user_333",
-    desk: "DESK 1",
-    seatNumber: 1,
-    startTime: "08:00",
-    endTime: "10:00",
-    createdAt: "2025-09-24T00:50:00Z",
-  },
-];
+function fireTimestampToDate(ts) {
+  if (!ts) return new Date();
+  if (typeof ts === "object" && "_seconds" in ts) {
+    return new Date(ts._seconds * 1000);
+  }
+  return new Date(ts);
+}
 
-/**
- * Summary: Format date to "Day, MM/DD" format.
- * @param {string} dateString - ISO date string
- * @returns {string} - formatted date string
- */
-function formatDate(dateString) {
-  const date = new Date(dateString);
+function formatDate(dateInput) {
+  const date = fireTimestampToDate(dateInput);
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const dayName = days[date.getDay()];
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
-  return `${dayName}, ${month}/${day}`;
+  return `${dayName}, ${day}/${month}`;
 }
 
-/**
- * Summary: CustomerBookingPOV component to display customer bookings with delete functionality.
- * @returns {JSX.Element} CustomerBookingPOV component displaying bookings in a table.
- */
+function formatToHHMM(dateInput) {
+  const date = fireTimestampToDate(dateInput);
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
 export default function CustomerBookingPOV() {
   const [bookings, setBookings] = useState([]);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
-  const { signout } = useAuth(); // Destructure signout from useAuth
+  const { user, signout } = useAuth();
+
+  const currentUserName = user?.displayName || user?.email?.split('@')[0] || 'User';
+
+  async function fetchBookings() {
+    setLoading(true);
+    setError(null);
+    try {
+      if (!currentUserName) {
+        setBookings([]);
+        setError("No user found.");
+        setLoading(false);
+        return;
+      }
+      const res = await bookingService.getBookingsByName(currentUserName);
+      const data = res.bookings || [];
+      const sorted = [...data].sort(
+        (a, b) => fireTimestampToDate(b.createdAt) - fireTimestampToDate(a.createdAt)
+      );
+      setBookings(sorted);
+    } catch (err) {
+      // If 404, treat as no bookings, not as error.
+      if (err?.message?.includes('404')) {
+        setBookings([]);
+      } else {
+        setError("Failed to fetch bookings.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    // In real app, fetch bookings from API here
-    // For now, use mock data sorted by createdAt (latest first)
-    const sorted = [...mockBookings].sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-    );
-    setBookings(sorted);
-  }, []);
+    fetchBookings();
+    // eslint-disable-next-line
+  }, [currentUserName]);
 
-  const handleDeleteClick = (booking) => {
-    setDeleteConfirm(booking);
-  };
+  const handleDeleteClick = (booking) => setDeleteConfirm(booking);
 
-  const handleConfirmDelete = () => {
-    setBookings(bookings.filter(b => b.id !== deleteConfirm.id));
-    setDeleteConfirm(null);
-  };
-
-  const handleCancelDelete = () => {
-    setDeleteConfirm(null);
-  };
-  
-  /**
-   * Summary: Handles user logout and navigates to the login page.
-   * @returns {void}
-   */
-  const handleLogout = async () => {
+  // Use cancelBooking for customers
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirm) return;
+    setDeleting(true);
+    setError(null);
     try {
-        await signout();
-        navigate('/login');
-    } catch (error) {
-        console.error("Logout failed:", error);
-        alert("Logout failed. Please try again later.");
+      await bookingService.cancelBooking(deleteConfirm.id, "Cancelled by user");
+      setDeleteConfirm(null);
+      await fetchBookings();
+    } catch (err) {
+      setError("Failed to cancel booking.");
+      setDeleting(false);
     }
   };
-  
-  // Navigate back to the booking page
-  const handleNavigateToBooking = () => {
-    navigate('/booking');
+
+  const handleCancelDelete = () => setDeleteConfirm(null);
+
+  const handleNavigateToBooking = () => navigate('/booking');
+
+  const handleLogout = async () => {
+    try {
+      await signout();
+      navigate('/login');
+    } catch (err) {
+      alert("Logout failed. Please try again.");
+    }
   };
+
+  // Only show active (not cancelled) bookings
+  const activeBookings = bookings.filter(b => b.status !== "cancelled");
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen font-sans bg-gray-100 p-4 pt-24">
       <header className="absolute top-[24px] left-[34px] flex items-center w-[calc(100vw-68px)] justify-between pr-20">
         <Logo />
-        {/* Logout button uses implemented logic */}
         <button
           onClick={handleLogout}
           className="px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-500 transition-colors"
@@ -127,75 +119,78 @@ export default function CustomerBookingPOV() {
         >
           Logout
         </button>
-      </header>      
-      {/* Removed font-mono to use font-sans */}
-      <h1 className="text-3xl font-bold mb-12 mt-8">My Bookings</h1> 
-      {/* Removed font-mono */}
-      <button onClick={handleNavigateToBooking} 
-      className="px-6 py-3 bg-sky-400 text-white rounded-lg hover:bg-sky-500 transition-colors font-semibold mb-8">
+      </header>
+      <h1 className="text-3xl font-bold mb-12 mt-8">My Bookings</h1>
+      <button
+        onClick={handleNavigateToBooking}
+        className="px-6 py-3 bg-sky-400 text-white rounded-lg hover:bg-sky-500 transition-colors font-semibold mb-8"
+      >
         Create New Booking
       </button>
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-md border border-gray-200 p-8">
-        <table className="w-full table-auto">
-          <thead>
-            <tr className="bg-gray-200">
-              {/* Removed font-mono */}
-              <th className="px-4 py-3 text-left">Date</th> 
-              {/* Removed font-mono */}
-              <th className="px-4 py-3 text-left">Chair</th> 
-              {/* Removed font-mono */}
-              <th className="px-4 py-3 text-left">Action</th> 
-            </tr>
-          </thead>
-          <tbody>
-            {bookings.length === 0 ? (
-              <tr>
-                {/* Removed font-mono */}
-                <td colSpan={3} className="text-center py-8 text-gray-500"> 
-                  No bookings found.
-                </td>
+        {loading ? (
+          <div className="text-center text-gray-500 py-8">Loading...</div>
+        ) : error ? (
+          <div className="text-center text-red-500 py-8">{error}</div>
+        ) : (
+          <table className="w-full table-auto">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="px-4 py-3 text-left">Date</th>
+                <th className="px-4 py-3 text-left">Start Time</th>
+                <th className="px-4 py-3 text-left">End Time</th>
+                <th className="px-4 py-3 text-left">Desk</th>
+                <th className="px-4 py-3 text-left">Action</th>
               </tr>
-            ) : (
-              bookings.map((b) => (
-                <tr key={b.id} className="hover:bg-sky-50 transition">
-                  {/* Removed font-mono */}
-                  <td className="px-4 py-2">{formatDate(b.createdAt)}</td> 
-                  {/* Removed font-mono */}
-                  <td className="px-4 py-2">{b.seatNumber}</td> 
-                  {/* Removed font-mono */}
-                  <td className="px-4 py-2"> 
-                    <button
-                      onClick={() => handleDeleteClick(b)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition"
-                    >
-                      Delete
-                    </button>
+            </thead>
+            <tbody>
+              {activeBookings.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center py-8 text-gray-500">
+                    No bookings found.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                activeBookings.map((b) => (
+                  <tr key={b.id} className="hover:bg-sky-50 transition">
+                    <td className="px-4 py-2">{formatDate(b.startTimestamp)}</td>
+                    <td className="px-4 py-2">{formatToHHMM(b.startTimestamp)}</td>
+                    <td className="px-4 py-2">{formatToHHMM(b.endTimestamp)}</td>
+                    <td className="px-4 py-2">{b.deskId || b.desk || b.seatNumber}</td>
+                    <td className="px-4 py-2">
+                      <button
+                        onClick={() => handleDeleteClick(b)}
+                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition"
+                        disabled={deleting}
+                      >
+                        {deleting && deleteConfirm?.id === b.id ? "Cancelling..." : "Cancel"}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
-
-      {/* Delete Confirmation Popup */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 max-w-md w-full mx-4">
-            {/* Removed font-mono */}
-            <h3 className="text-lg font-bold mb-4 text-center"> 
-              Delete booking for {formatDate(deleteConfirm.createdAt)}?
+            <h3 className="text-lg font-bold mb-4 text-center">
+              Cancel booking for {formatDate(deleteConfirm.startTimestamp)}?
             </h3>
             <div className="flex justify-center space-x-4">
               <button
                 onClick={handleConfirmDelete}
                 className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded transition"
+                disabled={deleting}
               >
-                Confirm
+                {deleting ? "Cancelling..." : "Confirm"}
               </button>
               <button
                 onClick={handleCancelDelete}
                 className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded transition"
+                disabled={deleting}
               >
                 Cancel
               </button>
