@@ -1,6 +1,7 @@
 const logger = require("../logger.js")
 const express = require("express");
 const { db } = require("../config/firebase.js");
+const ics = require("ics")
 
 /**
  * Summary: Creates a booking.
@@ -568,4 +569,76 @@ const deleteBooking = async (req, res) => {
     }
 }
 
-module.exports = { createBooking, getBookingsByName, getBookingById, getBookingByStartTimestamp, getBookingByEndTimestamp, getAllBookings, updateBooking, cancelBooking, deleteBooking }
+/**
+ * Summary: Retrieves the latest booking made by the user and creates an ICS file to be downloaded
+ *
+ * @param {express.Request} req - Express request object, expects the 'userID' in the URL parameters
+ * @param {express.Response} res - Express response object for sending status and data.
+ * @returns {void}
+ * @throws {Error} If input validation fails or if database returns an error.
+ * @example
+ * GET /bookings
+ * generateICSFileforBooking(req, res);
+ */
+const generateICSFileforBooking = async ( req, res ) => {
+
+    try{
+        const { userId } = req.params;
+
+        // Get the users latest booking based on userID
+        const latestBookingSnapshot = await db.collection("bookings")
+                                    .where("user_id", "==", userId)
+                                    .orderBy("created_at", "desc")
+                                    .limit(1)
+                                    .get();
+
+        // Check if the query returned anything
+        if (latestBookingSnapshot.empty) {
+            return res.status(404).json({ error: "Failed to retrieve data for creation of ICS file, " + userId + " not found." });
+        }
+
+        // Get the first codiment in the result set
+        const latestDoc = latestBookingSnapshot.docs[0];
+
+        // Extract the data as key value pairs
+        const latestBookingData = latestDoc.data();
+
+        // Get the start time and end time of the booking
+        const startTime = latestBookingData.start_time.toDate();
+        const endTime = latestBookingData.end_time.toDate();
+
+        // Extract the data needed for the creation of the ICS file
+        const booking = {
+            title: "Desk Booking",
+            description: "Desk booking at TERRAIN",
+            location: "101-103 Brunswick St, Fitzroy VIC 3065",
+            start: [startTime.getFullYear(), startTime.getMonth() + 1, startTime.getDate(), startTime.getHours(), startTime.getMinutes()],
+            end:[endTime.getFullYear(), endTime.getMonth() + 1, endTime.getDate(), endTime.getHours(), endTime.getMinutes()],
+            status: 'CONFIRMED'
+        }
+
+        // Create ICS event string
+        const { error, value } = ics.createEvent(booking);
+        
+        if(error){
+            return res.status(500).json({ error: "Failed to create ics file."});
+        }
+
+        // Set the correct headers to trigger a file download
+        res.setHeader('Content-Type', 'text/calendar');
+        res.setHeader('Content-Disposition', 'attachment; filename="booking.ics"');
+
+        // Send the generated ICS file as the response
+        return res.status(200).send(value);
+    }
+    catch (err) {
+        console.error("Error in generateICSFileforBooking", err);
+        return res.status(500).json({error: "An internal server error occured. "})
+    }
+
+    
+
+
+}
+
+module.exports = { createBooking, getBookingsByName, getBookingById, getBookingByStartTimestamp, getBookingByEndTimestamp, getAllBookings, updateBooking, cancelBooking, deleteBooking, generateICSFileforBooking }

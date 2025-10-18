@@ -40,4 +40,7 @@ router.patch("/cancel/:id", cancelBooking)
 // Delete booking by ID (Admin only)
 router.delete("/:id", deleteBooking);
 
+// Generate and send the ICS booking file
+router.get("/:id/ical", generateICSFileforBooking);
+
 module.exports = router;
