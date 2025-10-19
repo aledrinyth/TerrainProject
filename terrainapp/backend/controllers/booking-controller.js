@@ -597,7 +597,7 @@ const generateICSFileforBooking = async ( req, res ) => {
             return res.status(404).json({ error: "Failed to retrieve data for creation of ICS file, " + userId + " not found." });
         }
 
-        // Get the first codiment in the result set
+        // Get the first document in the result set
         const latestDoc = latestBookingSnapshot.docs[0];
 
         // Extract the data as key value pairs
@@ -632,7 +632,7 @@ const generateICSFileforBooking = async ( req, res ) => {
         return res.status(200).send(value);
     }
     catch (err) {
-        console.error("Error in generateICSFileforBooking", err);
+        logger.error("Error in generateICSFileforBooking", err);
         return res.status(500).json({error: "An internal server error occured. "})
     }
 

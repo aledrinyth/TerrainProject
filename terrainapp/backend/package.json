@@ -16,7 +16,6 @@
     "express": "^5.1.0",
     "firebase-admin": "^13.5.0",
     "pino": "^9.9.5",
-    "file-saver": "^2.0.5",    
     "ics": "^3.0.0"   
   }
 }
