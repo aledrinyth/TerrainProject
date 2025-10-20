@@ -14,7 +14,7 @@
     "express": "^5.1.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-router-dom": "^7.6.3"
+    "react-router-dom": "^7.6.3",
     "ics": "^3.0.0"
   },
   "devDependencies": {
