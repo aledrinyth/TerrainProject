@@ -8,7 +8,8 @@ const {
     getAllBookings, 
     updateBooking, 
     cancelBooking,
-    deleteBooking
+    deleteBooking,
+    generateICSFileforBooking
 } = require("../controllers/booking-controller");
 
 const router = express.Router();
@@ -39,5 +40,8 @@ router.patch("/cancel/:id", cancelBooking)
 
 // Delete booking by ID (Admin only)
 router.delete("/:id", deleteBooking);
+
+// Generate and send the ICS booking file
+router.get("/:userId", generateICSFileforBooking);
 
 module.exports = router;
