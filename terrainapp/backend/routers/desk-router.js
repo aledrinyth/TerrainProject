@@ -13,14 +13,14 @@ const router = express.Router();
 // Create a new desk
 router.post("/", createDesk);
 
-// Get all desks
+// Get all desks (must come before /:id to avoid conflicts)
 router.get("/", getAllDesks);
 
-// Get desk by ID
-router.get("/:id", getDeskById);
-
-// Get desks by name
+// Get desks by name (specific routes before generic param routes)
 router.get("/name/:name", getDesksByName);
+
+// Get desk by ID (generic param route comes after specific routes)
+router.get("/:id", getDeskById);
 
 // Update desk by ID
 router.patch("/:id", updateDesk);

@@ -1,12 +1,14 @@
-// --- ✅ MOCK SETUP (must be on top) ---
+// tests/desk-controller.test.js
 
-// Mock pino (used in logger.js)
+// --- ✅ MOCKS (must be at very top) ---
+
+// Mock pino (used by logger.js). If pino isn't installed, {virtual:true} prevents resolution errors.
 jest.mock('pino', () => () => ({
   info: jest.fn(),
   error: jest.fn(),
   warn: jest.fn(),
   debug: jest.fn(),
-}));
+}), { virtual: true });
 
 // Mock logger.js
 jest.mock('../logger.js', () => ({
@@ -16,7 +18,7 @@ jest.mock('../logger.js', () => ({
   debug: jest.fn(),
 }));
 
-// Mock firebase-admin for firebase.js
+// Mock firebase-admin enough for our firestore usage
 jest.mock('firebase-admin', () => ({
   initializeApp: jest.fn(),
   firestore: () => ({
@@ -31,17 +33,23 @@ jest.mock('firebase-admin', () => ({
   }),
 }));
 
-// Mock firebase.js config wrapper
+// Mock ../config/firebase.js to export db and getAuth()
+// so controllers can call getAuth().verifyIdToken(token)
 jest.mock('../config/firebase.js', () => {
   const admin = require('firebase-admin');
+
+  // default verifyIdToken resolves to an admin user
+  const verifyIdToken = jest.fn().mockResolvedValue({ admin: true });
+
   return {
     db: admin.firestore(),
-    admin,
-    adminAuth: admin.auth?.(),
+    getAuth: () => ({ verifyIdToken }),
+    // expose the spy for per-test overrides if needed
+    __TEST__: { verifyIdToken },
   };
 });
 
-// --- ✅ IMPORT AFTER MOCKS ---
+// --- ✅ IMPORTS AFTER MOCKS ---
 const {
   createDesk,
   getDesksByName,
@@ -50,7 +58,8 @@ const {
   updateDesk,
   deleteDesk,
 } = require('../controllers/desk-controller');
-const { db } = require('../config/firebase');
+
+const { db, __TEST__ } = require('../config/firebase');
 const logger = require('../logger');
 
 describe('Desk Controller', () => {
@@ -58,16 +67,25 @@ describe('Desk Controller', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
     req = {
       body: {},
       params: {},
       query: {},
       headers: {},
     };
+
+    // Give all tests a default valid Bearer token so we pass the 401 gate
+    req.headers.authorization = 'Bearer test-token';
+
     res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis(),
     };
+
+    // reset verifyIdToken to default "admin: true"
+    __TEST__.verifyIdToken.mockReset();
+    __TEST__.verifyIdToken.mockResolvedValue({ admin: true });
   });
 
   // --- ✅ createDesk ---
@@ -87,6 +105,8 @@ describe('Desk Controller', () => {
       name: 'Desk A',
       seats: 4,
       roomId: 'Room1',
+      positionX: 10,
+      positionY: 20,
     };
 
     const mockAdd = jest.fn().mockResolvedValue({ id: 'desk123' });
@@ -96,7 +116,19 @@ describe('Desk Controller', () => {
 
     await createDesk(req, res);
 
+    expect(mockAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Desk A',
+        roomId: 'Room1',
+        seats: 4,
+        positionX: 10,
+        positionY: 20,
+        createdAt: expect.any(Date),
+      })
+    );
+
     expect(res.status).toHaveBeenCalledWith(201);
+    // NOTE: controller does not return `isBooked`, so we don't assert it
     expect(res.json).toHaveBeenCalledWith({
       message: 'Desk created successfully.',
       desk: expect.objectContaining({
@@ -104,13 +136,15 @@ describe('Desk Controller', () => {
         name: 'Desk A',
         roomId: 'Room1',
         seats: 4,
-        isBooked: false,
+        positionX: 10,
+        positionY: 20,
       }),
     });
   });
 
   test('createDesk → handles database errors gracefully', async () => {
     req.body = { name: 'Desk A', seats: 4, roomId: 'Room1' };
+
     db.collection = jest.fn().mockReturnValue({
       add: jest.fn().mockRejectedValue(new Error('DB Error')),
     });
@@ -247,6 +281,33 @@ describe('Desk Controller', () => {
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({
       error: 'No desk with id desk123 found.',
+    });
+  });
+
+  // --- Optional: demonstrate non-admin path ---
+  test('createDesk → rejects non-admin with 403', async () => {
+    __TEST__.verifyIdToken.mockResolvedValueOnce({ admin: false });
+
+    req.body = { name: 'Desk A', seats: 4, roomId: 'Room1' };
+
+    await createDesk(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Delete user can only be done by admin.',
+    });
+  });
+
+  // --- Optional: demonstrate 401 when header missing ---
+  test('createDesk → returns 401 when no token provided', async () => {
+    req.headers.authorization = undefined;
+    req.body = { name: 'Desk A', seats: 4, roomId: 'Room1' };
+
+    await createDesk(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Authorisation token required.',
     });
   });
 });
