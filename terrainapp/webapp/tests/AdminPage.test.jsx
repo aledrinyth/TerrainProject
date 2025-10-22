@@ -2,14 +2,14 @@ import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import AdminPage from '../src/AdminPage';
 
-// 🧩 Mock bookingService
+// Mock bookingService
 jest.mock('../src/services/bookingService', () => ({
   bookingService: {
     getAllBookings: jest.fn(),
   },
 }));
 
-// 🧹 Silence console.error for API errors
+// Silence console.error for API errors
 const originalError = console.error;
 beforeAll(() => {
   console.error = (...args) => {
@@ -26,7 +26,7 @@ describe('AdminPage', () => {
     jest.clearAllMocks();
   });
 
-  // ✅ Test 1: Successful fetch → table rendered and sorted
+  // Test 1: Successful fetch → table rendered and sorted
   test('renders table, sorts rows by createdAt desc, and shows correct data', async () => {
     const mockBookings = {
       bookings: [
@@ -101,7 +101,7 @@ describe('AdminPage', () => {
     expect(row2[5]).toHaveTextContent('28/09/2025'); // Date Of Booking
   });
 
-  // ✅ Test 2: API fails → fallback message
+  // Test 2: API fails → fallback message
   test('shows "No bookings found." when API fails', async () => {
     const { bookingService } = require('../src/services/bookingService');
     bookingService.getAllBookings.mockRejectedValueOnce(new Error('API failure'));
@@ -113,7 +113,7 @@ describe('AdminPage', () => {
     });
   });
 
-  // ✅ Test 3: No data returned → fallback message
+  // Test 3: No data returned → fallback message
   test('shows "No bookings found." when no data is returned', async () => {
     const { bookingService } = require('../src/services/bookingService');
     bookingService.getAllBookings.mockResolvedValueOnce({ bookings: [] });

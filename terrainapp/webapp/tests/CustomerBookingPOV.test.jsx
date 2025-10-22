@@ -4,7 +4,6 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 // --- Mocks ---
-// NOTE: paths here must mirror how the component imports them (component is at src/CustomerBookingPOV.jsx)
 jest.mock('../contexts/AuthContext.jsx', () => ({
   useAuth: () => ({
     user: { displayName: 'alice' },

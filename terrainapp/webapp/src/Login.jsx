@@ -62,12 +62,27 @@ export default function Login() {
 
     } catch (error) {
       // Check for common authentication errors
-      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+      /*if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
         alert('Login failed: Invalid email or password. Please try again.');
       } else {
         console.error("Login failed:", error);
         alert('An unknown error occurred during login. Please try again later.');
       }
+      */
+      console.error("[Login] error raw:", error);
+      console.error("[Login] code:", error?.code, "message:", error?.message, "name:", error?.name);
+
+      const friendly = {
+        "auth/invalid-credential": "Invalid email or password.",
+        "auth/invalid-email": "That email looks invalid.",
+        "auth/user-not-found": "No account found with that email.",
+        "auth/wrong-password": "Invalid email or password.",
+        "auth/too-many-requests": "Too many attempts. Try again later.",
+        "auth/network-request-failed": "Network error. Check your connection.",
+        "auth/unauthorized-domain": "This domain is not authorized in Firebase Auth settings."
+      };
+
+      alert(friendly[error?.code] ?? `Login failed: ${error?.code ?? "unknown"}. Check console for details.`);
     }
   };
 

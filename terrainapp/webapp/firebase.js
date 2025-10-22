@@ -2,14 +2,14 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 
-// Firebase configuration
+// Firebase configuration - values don't matter for emulator
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "demo-api-key",
+  authDomain: "demo-no-project.firebaseapp.com",
+  projectId: "demo-no-project",  // Changed to match emulator
+  storageBucket: "demo-no-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef"
 };
 
 // Initialize Firebase
@@ -18,10 +18,8 @@ const app = initializeApp(firebaseConfig);
 // Get the auth instance
 const auth = getAuth(app);
 
-// Connect to the Firebase Auth Emulator
-if (process.env.NODE_ENV === 'development') {
-  connectAuthEmulator(auth, "http://localhost:9099");
-  console.log("Connected to local Firebase Auth Emulator");
-}
+// Connect to emulator
+connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+console.log(" Connected to Firebase Auth Emulator");
 
 export { auth };

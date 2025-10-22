@@ -1,8 +1,6 @@
 // tests/desk-controller.test.js
 
-// --- ✅ MOCKS (must be at very top) ---
-
-// Mock pino (used by logger.js). If pino isn't installed, {virtual:true} prevents resolution errors.
+// Mock pino (used by logger.js). 
 jest.mock('pino', () => () => ({
   info: jest.fn(),
   error: jest.fn(),
@@ -49,7 +47,7 @@ jest.mock('../config/firebase.js', () => {
   };
 });
 
-// --- ✅ IMPORTS AFTER MOCKS ---
+// --- IMPORTS AFTER MOCKS ---
 const {
   createDesk,
   getDesksByName,
@@ -88,7 +86,7 @@ describe('Desk Controller', () => {
     __TEST__.verifyIdToken.mockResolvedValue({ admin: true });
   });
 
-  // --- ✅ createDesk ---
+  // --- createDesk ---
   test('createDesk → returns 400 if required fields missing', async () => {
     req.body = { name: 'Desk A' }; // Missing seats and roomId
 
@@ -128,7 +126,7 @@ describe('Desk Controller', () => {
     );
 
     expect(res.status).toHaveBeenCalledWith(201);
-    // NOTE: controller does not return `isBooked`, so we don't assert it
+    // NOTE: controller does not return `isBooked`
     expect(res.json).toHaveBeenCalledWith({
       message: 'Desk created successfully.',
       desk: expect.objectContaining({
@@ -158,7 +156,7 @@ describe('Desk Controller', () => {
     expect(logger.error).toHaveBeenCalled();
   });
 
-  // --- ✅ getDesksByName ---
+  // --- getDesksByName ---
   test('getDesksByName → returns desks when found', async () => {
     req.params = { name: 'Desk A' };
 
@@ -193,7 +191,7 @@ describe('Desk Controller', () => {
     expect(res.json).toHaveBeenCalledWith({ error: 'No desk(s) found.' });
   });
 
-  // --- ✅ getDeskById ---
+  // --- getDeskById ---
   test('getDeskById → returns 400 if id missing', async () => {
     req.params = {}; // no id
     await getDeskById(req, res);
@@ -215,7 +213,7 @@ describe('Desk Controller', () => {
     expect(res.json).toHaveBeenCalledWith({ error: 'Desk not found.' });
   });
 
-  // --- ✅ getAllDesks ---
+  // --- getAllDesks ---
   test('getAllDesks → returns 404 when empty', async () => {
     db.collection = jest.fn().mockReturnValue({
       get: jest.fn().mockResolvedValue({ empty: true }),
@@ -227,7 +225,7 @@ describe('Desk Controller', () => {
     expect(res.json).toHaveBeenCalledWith({ error: 'No desks in database.' });
   });
 
-  // --- ✅ updateDesk ---
+  // --- updateDesk ---
   test('updateDesk → updates a desk successfully', async () => {
     req.params = { id: 'desk1' };
     req.body = { name: 'Updated Desk' };
@@ -258,7 +256,7 @@ describe('Desk Controller', () => {
     });
   });
 
-  // --- ✅ deleteDesk ---
+  // --- deleteDesk ---
   test('deleteDesk → returns 400 if id missing', async () => {
     req.params = {};
     await deleteDesk(req, res);
@@ -284,7 +282,7 @@ describe('Desk Controller', () => {
     });
   });
 
-  // --- Optional: demonstrate non-admin path ---
+  // --- demonstrate non-admin path ---
   test('createDesk → rejects non-admin with 403', async () => {
     __TEST__.verifyIdToken.mockResolvedValueOnce({ admin: false });
 
@@ -298,7 +296,7 @@ describe('Desk Controller', () => {
     });
   });
 
-  // --- Optional: demonstrate 401 when header missing ---
+  // --- demonstrate 401 when header missing ---
   test('createDesk → returns 401 when no token provided', async () => {
     req.headers.authorization = undefined;
     req.body = { name: 'Desk A', seats: 4, roomId: 'Room1' };

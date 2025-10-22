@@ -2,7 +2,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 
-// IMPORTANT: mock the config module *before* importing the component,
+// mock the config module before importing the component,
 // and do it as a virtual module so Jest doesn't try to parse the real file.
 jest.mock('../src/config', () => ({
   __esModule: true,

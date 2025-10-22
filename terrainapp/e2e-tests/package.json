@@ -1,0 +1,24 @@
+{
+  "name": "terrain-e2e-tests",
+  "version": "1.0.0",
+  "description": "E2E tests for Terrain desk booking app",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report",
+    "test:auth": "playwright test tests/auth.spec.js",
+    "test:booking": "playwright test tests/booking.spec.js",
+    "test:my-bookings": "playwright test tests/my-bookings.spec.js",
+    "test:admin": "playwright test tests/admin.spec.js",
+    "test:protected": "playwright test tests/protected-routes.spec.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}

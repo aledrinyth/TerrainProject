@@ -1,23 +1,25 @@
 const admin = require('firebase-admin');
 
-// Environment-based configuration
-const PROJECT_ID = process.env.GCP_PROJECT;
+// Point to emulators FIRST (before initialization)
+process.env.FIREBASE_AUTH_EMULATOR_HOST = '127.0.0.1:9099';
+process.env.FIRESTORE_EMULATOR_HOST = '127.0.0.1:8090';  // Use your Firestore port
 
-// Initialize Firebase Admin
-admin.initializeApp({
-    projectId: PROJECT_ID,
-});
+// Initialize Firebase Admin for emulator
+if (!admin.apps.length) {
+  admin.initializeApp({
+    projectId: 'demo-no-project',  // Hardcoded for emulator
+  });
+}
 
 // Get Firestore instance
 const db = admin.firestore();
-const adminAuth = admin.auth()
+const adminAuth = admin.auth();
 
-// For development, disable SSL warnings from emulator
-if (process.env.NODE_ENV !== 'production') {
-    db.settings({
-        host: process.env.FIRESTORE_EMULATOR_HOST,
-        ssl: false
-    });
-}
+// Firestore will automatically use the emulator based on FIRESTORE_EMULATOR_HOST
+// No need for manual settings in emulator mode
+
+console.log('✅ Firebase Admin initialized for emulator');
+console.log('   Auth: 127.0.0.1:9099');
+console.log('   Firestore: 127.0.0.1:8095');
 
 module.exports = { db, admin, adminAuth };

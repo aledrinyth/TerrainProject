@@ -51,7 +51,7 @@ jest.mock('../config/firebase.js', () => ({
   adminAuth: { setCustomUserClaims: jest.fn(), getUserByEmail: jest.fn() },
 }));
 
-// --- ✅ IMPORT AFTER MOCKS ---
+// --- IMPORT AFTER MOCKS ---
 const {
   createUser,
   getUserByEmail,
@@ -81,7 +81,7 @@ describe('User Controller', () => {
     };
   });
 
-  // --- ✅ createUser ---
+  // --- createUser ---
   test('createUser → returns 400 if required fields missing', async () => {
     req.body = { name: 'John' }; // Missing email and phoneNumber
 
@@ -137,7 +137,7 @@ describe('User Controller', () => {
     });
   });
 
-  // --- ✅ getUserByEmail ---
+  // --- getUserByEmail ---
   test('getUserByEmail → returns 403 if not admin', async () => {
     req.params = { email: 'john@example.com' };
     req.headers.authorization = 'Bearer token123';
@@ -169,7 +169,7 @@ describe('User Controller', () => {
     });
   });
 
-  // --- ✅ getAllUsers ---
+  // --- getAllUsers ---
   test('getAllUsers → returns 403 if not admin', async () => {
     req.headers.authorization = 'Bearer token123';
     mockVerifyIdToken.mockResolvedValue({ admin: false });
@@ -202,7 +202,7 @@ describe('User Controller', () => {
     });
   });
 
-  // --- ✅ deleteUser ---
+  // --- deleteUser ---
   test('deleteUser → returns 403 if not admin', async () => {
     req.params = { email: 'john@example.com' };
     req.headers.authorization = 'Bearer token123';
@@ -229,7 +229,7 @@ describe('User Controller', () => {
     });
   });
 
-  // --- ✅ setAdmin ---
+  // --- setAdmin ---
   test('setAdmin → returns 400 if no email', async () => {
     req.params = {}; // FIXED
     await setAdmin(req, res);
