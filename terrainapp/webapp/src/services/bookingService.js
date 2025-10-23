@@ -20,18 +20,10 @@ export const bookingService = {
         return apiRequest(`/booking/name/${name}`);
     },
 
-    // Get bookings by start timestamp (uses query parameters)
-    getBookingByStartTimestamp: async (startTimestamp, deskId) => {
-        const queryParams = `startTimestamp=${encodeURIComponent(startTimestamp)}&deskId=${encodeURIComponent(deskId)}`;
-        
-        return apiRequest(`/booking/by-start-time?${queryParams}`);
-    },
+    getBookingsByDate: async (dateTimestamp) => {
+        const queryParams = `dateTimestamp=${encodeURIComponent(dateTimestamp)}`;
 
-    // Get bookings by end timestamp (uses query parameters)
-    getBookingByEndTimestamp: async (endTimestamp, deskId) => {
-        const queryParams = `endTimestamp=${encodeURIComponent(endTimestamp)}&deskId=${encodeURIComponent(deskId)}`;
-        
-        return apiRequest(`/booking/by-end-time?${queryParams}`);
+        return apiRequest(`/booking/by-date?${queryParams}`);
     },
 
     // Get all bookings

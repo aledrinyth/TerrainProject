@@ -3,8 +3,7 @@ const {
     createBooking, 
     getBookingsByName, 
     getBookingById, 
-    getBookingByStartTimestamp, 
-    getBookingByEndTimestamp, 
+    getBookingsByDate, 
     getAllBookings, 
     updateBooking, 
     cancelBooking,
@@ -19,17 +18,14 @@ router.post("/", createBooking);
 // Get all bookings
 router.get("/", getAllBookings);
 
-// Get booking by ID
-router.get("/:id", getBookingById);
-
-// Get booking by starting Timestamp
-router.get("/by-start-time", getBookingByStartTimestamp);
-
-// Get booking by end Timestamp
-router.get("/by-end-time", getBookingByEndTimestamp);
+// Get bookings by date Timestamp (query route)
+router.get("/by-date", getBookingsByDate);
 
 // Get bookings by name
 router.get("/name/:name", getBookingsByName);
+
+// Get booking by ID
+router.get("/:id", getBookingById);
 
 // Update booking by ID
 router.patch("/:id", updateBooking);
