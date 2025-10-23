@@ -210,7 +210,7 @@ const Desk = ({ deskName, seatNumberOffset = 0, seatAvailability, selectedSeats,
   
   return (
     <div className="w-full md:w-[545px] h-[459px] bg-gray-200 border-2 border-black rounded-lg flex flex-col p-6">
-      <h3 className="font-mono text-3xl font-bold text-center mb-6">{deskName}</h3>
+      {/*<h3 className="font-mono text-3xl font-bold text-center mb-6">{deskName}</h3>*/}
       
       <div className="flex-grow flex items-center justify-center gap-8 w-full">
         {/* Left Seats */}
