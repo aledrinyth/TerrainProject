@@ -2,6 +2,7 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { API_BASE_URL } from '../src/config';
 
 // A reusable component for the green/red seat indicators.
 const SeatCircle = ({ seatNumber, isBooked, isSelected, onSelect, isLoading }) => {
@@ -328,10 +329,6 @@ export default function App() {
   const currentUser = user?.uid || 'unknown';
   const currentUserName = user?.displayName || user?.email?.split('@')[0] || 'User';
   // **END: Retained Changes for Navigation**
-
-  // API base URL, environment variable or hardcoded for now
-  // In production, this should be set via environment variables
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:6969/api";
 
   // Helper function to create proper local datetime
   const createLocalDateTime = (date, time) => {

@@ -1,15 +1,16 @@
+// routers/booking-router.js
 const express = require("express");
 const { 
-    createBooking, 
-    getBookingsByName, 
-    getBookingById, 
-    getBookingByStartTimestamp, 
-    getBookingByEndTimestamp, 
-    getAllBookings, 
-    updateBooking, 
-    cancelBooking,
-    deleteBooking,
-    generateICSFileforBooking
+  createBooking, 
+  getBookingsByName, 
+  getBookingById, 
+  getBookingByStartTimestamp, 
+  getBookingByEndTimestamp, 
+  getAllBookings, 
+  updateBooking, 
+  cancelBooking,
+  deleteBooking,
+  generateICSFileforBooking
 } = require("../controllers/booking-controller");
 
 const router = express.Router();
@@ -20,8 +21,7 @@ router.post("/", createBooking);
 // Get all bookings
 router.get("/", getAllBookings);
 
-// Get booking by ID
-router.get("/:id", getBookingById);
+// ---- Place specific/static routes BEFORE any "/:id" style routes ----
 
 // Get booking by starting Timestamp
 router.get("/by-start-time", getBookingByStartTimestamp);
@@ -32,16 +32,17 @@ router.get("/by-end-time", getBookingByEndTimestamp);
 // Get bookings by name
 router.get("/name/:name", getBookingsByName);
 
-// Update booking by ID
-router.patch("/:id", updateBooking);
+// Generate and send the ICS booking file (distinct path to avoid conflict)
+router.get("/ics/:userId", generateICSFileforBooking);
 
-// Cancel booking by ID
-router.patch("/cancel/:id", cancelBooking)
+// Update booking by ID
+router.patch("/cancel/:id", cancelBooking); // more specific path still before generic
+router.patch("/:id", updateBooking);
 
 // Delete booking by ID (Admin only)
 router.delete("/:id", deleteBooking);
 
-// Generate and send the ICS booking file
-router.get("/:userId", generateICSFileforBooking);
+// Get booking by ID (generic catch-all should be LAST among GETs)
+router.get("/:id", getBookingById);
 
 module.exports = router;

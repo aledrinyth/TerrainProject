@@ -12,28 +12,28 @@ const {
 
 const router = express.Router();
 
-// Create a new user (Admin only)
-router.post("/create-user", createUser);
+// Get all users (Admin only) - specific route first
+router.get("/get-all-users", getAllUsers);
 
-// Get user by email (Admin only)
+// Get user by email (Admin only) - specific route before generic params
 router.get("/get-user-by-email/:email", getUserByEmail);
-
-// Get user by ID (Admin only)
-router.get("/get-user/:id", getUserById);
 
 // Get user by phone number (Admin only)
 router.get("/get-user-by-phone/:phoneNumber", getUserByPhoneNumber);
 
-// Get all users (Admin only)
-router.get("/get-all-users", getAllUsers);
+// Get user by ID (Admin only) - generic param route after specific routes
+router.get("/get-user/:id", getUserById);
+
+// Create a new user (Admin only)
+router.post("/create-user", createUser);
+
+// Set admin user (Admin only)
+router.post("/set-admin-role/:email", setAdmin);
 
 // Update user by email (Admin only)
 router.patch("/update-user/:emailQuery", updateUser);
 
 // Delete user by email (Admin only)
 router.delete("/delete-user/:email", deleteUser);
-
-// Set admin user (Admin only)
-router.post("/set-admin-role/:email", setAdmin);
 
 module.exports = router;
