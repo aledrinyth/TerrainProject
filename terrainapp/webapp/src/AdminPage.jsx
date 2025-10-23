@@ -1,5 +1,7 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import { bookingService } from './services/bookingService';
 
 const Logo = () => {
@@ -66,6 +68,40 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const navigate = useNavigate();
+  const { signout } = useAuth();
+
+  // Handler for logging out and redirecting to the login page
+  const handleLogout = async () => {
+    try {
+      await signout();
+      navigate('/login');
+    } catch (err) {
+      alert("Logout failed. Please try again.");
+    }
+  };
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch bookings from the booking service
+        const response = await bookingService.getAllBookings();
+
+        // Sort bookings by createdAt (latest first)
+        const sorted = (response.bookings ?? []).sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        setBookings(sorted);
+      } catch (err) {
+        console.error("Error fetching bookings:", err);
+        setError("Failed to fetch bookings. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
   // New state for cancel flow (copied behavior from CustomerBookingPOV)
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -151,9 +187,15 @@ export default function AdminPage() {
   const handleCancelDelete = () => setDeleteConfirm(null);
 
   return (
-    <div className="relative min-h-screen font-sans bg-gray-100">
-      <header className="absolute top-[24px] left-[34px]">
+    <div className="relative flex flex-col items-center justify-center min-h-screen font-sans bg-gray-100 p-4 pt-24">
+      <header className="absolute top-[24px] left-[34px] flex items-center w-[calc(100vw-68px)] justify-between pr-20">
         <Logo />
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-500 transition-colors font-sans font-semibold"
+        >
+          Logout
+        </button>
       </header>
 
       {/* Reserve space for header and center content in the remaining viewport */}
