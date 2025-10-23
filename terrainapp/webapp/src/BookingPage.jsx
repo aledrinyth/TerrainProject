@@ -286,12 +286,9 @@ const Kitchen = () => {
 };
 
 // Success notification component
-const SuccessNotification = ({ message, isVisible, onClose }) => {
+const SuccessNotification = ({ message, isVisible, onClose, onAddToCalendar }) => {
   useEffect(() => {
-    if (isVisible) {
-      const timer = setTimeout(onClose, 3000);
-      return () => clearTimeout(timer);
-    }
+
   }, [isVisible, onClose]);
 
   if (!isVisible) return null;
@@ -301,6 +298,8 @@ const SuccessNotification = ({ message, isVisible, onClose }) => {
       <div className="flex items-center gap-2">
         <span>✓</span>
         <span>{message}</span>
+        <button onClick={onAddToCalendar}
+          className="ml-3 px-3 py-1 bg-sky-400 hover:bg-sky-500 text-white rounded text-sm transition-colors">Add to calendar</button>
         <button onClick={onClose} className="ml-2 text-white hover:text-gray-200">×</button>
       </div>
     </div>
