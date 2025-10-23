@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { API_BASE_URL } from '../src/config';
+import { bookingService } from './services/bookingService';
+import { createEvent } from 'ics';
 
 // A reusable component for the green/red seat indicators.
 const SeatCircle = ({ seatNumber, isBooked, isSelected, onSelect, isLoading }) => {
@@ -285,8 +287,52 @@ const Kitchen = () => {
   );
 };
 
+// Function to create ICS file and download it
+const onAddToCalendar = async ({ userId }) => {
+  try {
+      console.log('Fetching ICS file for user:', userId);
+      
+      // Grab the ICS data from the service
+      // const icsContent = await bookingService.generateICSFile(userId);
+
+
+      const icsContent = await fetch(`${API_BASE_URL}/booking/ics/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      console.log('ICS content received:', icsContent);
+      
+      if (!icsContent) {
+        alert('No booking data found. Please try again.');
+        return;
+      }
+      
+      // Create a blob from the ICS string and download it
+      const file = new Blob([icsContent], { type: 'text/calendar' });
+      const url = URL.createObjectURL(file);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'booking.ics');
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      console.log('Calendar file downloaded successfully');
+  } catch (error) {
+      console.error('Error creating calendar event:', error);
+      alert('Failed to create calendar event. Please try again.');
+  }
+};
+
 // Success notification component
-const SuccessNotification = ({ message, isVisible, onClose, onAddToCalendar }) => {
+const SuccessNotification = ({ message, isVisible, onClose, onAddToCalendarFunc, userId }) => {
+  console.log("SUCCESS IS CALLED");
   useEffect(() => {
 
   }, [isVisible, onClose]);
@@ -298,7 +344,7 @@ const SuccessNotification = ({ message, isVisible, onClose, onAddToCalendar }) =
       <div className="flex items-center gap-2">
         <span>✓</span>
         <span>{message}</span>
-        <button onClick={onAddToCalendar}
+        <button onClick={() => onAddToCalendarFunc({ userId })}
           className="ml-3 px-3 py-1 bg-sky-400 hover:bg-sky-500 text-white rounded text-sm transition-colors">Add to calendar</button>
         <button onClick={onClose} className="ml-2 text-white hover:text-gray-200">×</button>
       </div>
@@ -569,6 +615,8 @@ export default function App() {
         message={successMessage}
         isVisible={showSuccess}
         onClose={() => setShowSuccess(false)}
+        userId={currentUser}
+        onAddToCalendarFunc={onAddToCalendar}
       />
 
       {/* The header is positioned absolutely relative to the main container */}

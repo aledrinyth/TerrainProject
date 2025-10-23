@@ -587,8 +587,8 @@ const generateICSFileforBooking = async ( req, res ) => {
 
         // Get the users latest booking based on userID
         const latestBookingSnapshot = await db.collection("bookings")
-                                    .where("user_id", "==", userId)
-                                    .orderBy("created_at", "desc")
+                                    .where("userId", "==", userId)
+                                    .orderBy("createdAt", "desc")
                                     .limit(1)
                                     .get();
 
@@ -604,8 +604,8 @@ const generateICSFileforBooking = async ( req, res ) => {
         const latestBookingData = latestDoc.data();
 
         // Get the start time and end time of the booking
-        const startTime = latestBookingData.start_time.toDate();
-        const endTime = latestBookingData.end_time.toDate();
+        const startTime = latestBookingData.startTimestamp.toDate();
+        const endTime = latestBookingData.endTimestamp.toDate();
 
         // Extract the data needed for the creation of the ICS file
         const booking = {
@@ -632,7 +632,7 @@ const generateICSFileforBooking = async ( req, res ) => {
         return res.status(200).send(value);
     }
     catch (err) {
-        logger.error("Error in generateICSFileforBooking", err);
+        logger.error(err, "Error in generateICSFileforBooking");
         return res.status(500).json({error: "An internal server error occured. "})
     }
 
