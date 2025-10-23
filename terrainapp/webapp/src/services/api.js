@@ -1,45 +1,52 @@
+// src/services/apiRequest.js 
 import { auth } from '../../firebase';
 
-//const logger = require("../logger.js")
-
-//const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:6969/api"; // no .env file yet, but needed later after local dev
+// NOTE:swap this to read from env if desired
 const API_BASE_URL = "http://localhost:6969/api";
 
+
 export const apiRequest = async (endpoint, options = {}) => {
-    const url = `${API_BASE_URL}${endpoint}`;
+  const url = `${API_BASE_URL}${endpoint}`;
 
-    // Get current user's token if available
-    let authHeaders = {};
-    if (auth.currentUser) {
-        try {
-            const token = await auth.currentUser.getIdToken();
-            authHeaders.Authorization = `Bearer ${token}`;
-        } catch (error) {
-            console.warn("Could not get auth token:", error);
-        }
-    }
-
-    const config = {
-        headers: {
-            "Content-Type": "application/json",
-            ...authHeaders,
-            ...options.headers,
-        },
-        ...options,
-    };
-
+  // Try to get Firebase ID token
+  let authHeaders = {};
+  if (auth?.currentUser) {
     try {
-        const response = await fetch(url, config);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        return await response.json();
+      const token = await auth.currentUser.getIdToken();
+      authHeaders.Authorization = `Bearer ${token}`;
     } catch (error) {
-        console.error("API request failed:", error);
-        throw error;
+      console.warn("Could not get auth token:", error);
     }
+  }
+
+  // Spread options first so our merged headers (set after) don't get overwritten
+  const config = {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders,
+      ...(options.headers || {}),
+    },
+  };
+
+  try {
+    const response = await fetch(url, config);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // If server returns no content, avoid json() error
+    const contentType = response.headers?.get?.('Content-Type') || '';
+    if (response.status === 204 || !contentType.includes('application/json')) {
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("API request failed:", error);
+    throw error;
+  }
 };
 
 export default API_BASE_URL;
