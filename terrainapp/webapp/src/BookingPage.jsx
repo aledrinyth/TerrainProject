@@ -123,14 +123,14 @@ const BookingModal = ({ isOpen, onClose, selectedDate, selectedSeats, onBookingS
         
         {/* Selected seats display */}
         <div className="mb-4">
-          <label className="block mb-2 font-semibold">Selected Seats</label>
+          <label className="block mb-2 font-semibold">Selected Seat</label>
           <div className="bg-gray-100 p-2 rounded border">
             {selectedSeats.length > 0 ? (
               <span className="text-indigo-600 font-semibold">
-                Seats: {selectedSeats.join(', ')}
+                Seat: {selectedSeats.join(', ')}
               </span>
             ) : (
-              <span className="text-gray-500">No seats selected</span>
+              <span className="text-gray-500">No seat selected</span>
             )}
           </div>
         </div>
@@ -195,7 +195,7 @@ const BookingModal = ({ isOpen, onClose, selectedDate, selectedSeats, onBookingS
                 Booking...
               </span>
             ) : (
-              "Book Seats"
+              "Book"
             )}
           </button>
         </div>
