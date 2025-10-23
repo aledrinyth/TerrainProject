@@ -124,14 +124,14 @@ const BookingModal = ({ isOpen, onClose, selectedDate, selectedSeats, onBookingS
         
         {/* Selected seats display */}
         <div className="mb-4">
-          <label className="block mb-2 font-semibold">Selected Seats</label>
+          <label className="block mb-2 font-semibold">Selected Seat</label>
           <div className="bg-gray-100 p-2 rounded border">
             {selectedSeats.length > 0 ? (
               <span className="text-indigo-600 font-semibold">
-                Seats: {selectedSeats.join(', ')}
+                Seat: {selectedSeats.join(', ')}
               </span>
             ) : (
-              <span className="text-gray-500">No seats selected</span>
+              <span className="text-gray-500">No seat selected</span>
             )}
           </div>
         </div>
@@ -196,7 +196,7 @@ const BookingModal = ({ isOpen, onClose, selectedDate, selectedSeats, onBookingS
                 Booking...
               </span>
             ) : (
-              "Book Seats"
+              "Book"
             )}
           </button>
         </div>
@@ -211,7 +211,7 @@ const Desk = ({ deskName, seatNumberOffset = 0, seatAvailability, selectedSeats,
   
   return (
     <div className="w-full md:w-[545px] h-[459px] bg-gray-200 border-2 border-black rounded-lg flex flex-col p-6">
-      <h3 className="font-mono text-3xl font-bold text-center mb-6">{deskName}</h3>
+      {/*<h3 className="font-mono text-3xl font-bold text-center mb-6">{deskName}</h3>*/}
       
       <div className="flex-grow flex items-center justify-center gap-8 w-full">
         {/* Left Seats */}
@@ -286,12 +286,9 @@ const Kitchen = () => {
 };
 
 // Success notification component
-const SuccessNotification = ({ message, isVisible, onClose }) => {
+const SuccessNotification = ({ message, isVisible, onClose, onAddToCalendar }) => {
   useEffect(() => {
-    if (isVisible) {
-      const timer = setTimeout(onClose, 3000);
-      return () => clearTimeout(timer);
-    }
+
   }, [isVisible, onClose]);
 
   if (!isVisible) return null;
@@ -301,6 +298,8 @@ const SuccessNotification = ({ message, isVisible, onClose }) => {
       <div className="flex items-center gap-2">
         <span>✓</span>
         <span>{message}</span>
+        <button onClick={onAddToCalendar}
+          className="ml-3 px-3 py-1 bg-sky-400 hover:bg-sky-500 text-white rounded text-sm transition-colors">Add to calendar</button>
         <button onClick={onClose} className="ml-2 text-white hover:text-gray-200">×</button>
       </div>
     </div>
@@ -583,7 +582,7 @@ export default function App() {
             // Adjusted padding to match Logout button size
             className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors font-sans font-semibold"
           >
-            My bookings
+            My Bookings
           </button>
           {/* Logout button */}
           <button
