@@ -81,6 +81,7 @@ export default function AdminPage() {
     }
   };
 
+  {/*}
   useEffect(() => {
     const fetchBookings = async () => {
       try {
@@ -102,6 +103,8 @@ export default function AdminPage() {
         setLoading(false);
       }
     };
+
+    */}
   // New state for cancel flow (copied behavior from CustomerBookingPOV)
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
