@@ -15,58 +15,44 @@ const Logo = () => {
   );
 };
 
-function getDuration(start, end) {
-  if (typeof start !== "string" || typeof end !== "string") return "";
-  const [sh, sm] = start.split(":").map(Number);
-  const [eh, em] = end.split(":").map(Number);
-  if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return "";
-  let startMins = sh * 60 + sm;
-  let endMins = eh * 60 + em;
-  if (endMins < startMins) endMins += 24 * 60; // overnight booking
-  const mins = endMins - startMins;
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  return `${h > 0 ? `${h}h` : ""} ${m > 0 ? `${m}m` : ""}`.trim();
+function fireTimestampToDate(ts) {
+  if (!ts) return new Date();
+  if (typeof ts === "object" && "_seconds" in ts) {
+    return new Date(ts._seconds * 1000);
+  }
+  return new Date(ts);
 }
 
-function formatToHHMM(ts) {
-  let date;
-  if (!ts) return "N/A";
-  if (typeof ts === "number") {
-    date = new Date(ts);
-  } else if (typeof ts === "object" && "_seconds" in ts) {
-    date = new Date(ts._seconds * 1000);
-  } else if (typeof ts === "string") {
-    date = new Date(ts);
-  } else {
-    return "N/A";
-  }
-  return isNaN(date.getTime())
-    ? "Invalid date"
-    : date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+function formatDate(dateTimestamp) {
+  const date = fireTimestampToDate(dateTimestamp);
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const dayName = days[date.getDay()];
+  const monthName = months[date.getMonth()];
+  const day = date.getDate();
+  const year = date.getFullYear();
+  return `${dayName}, ${day} ${monthName} ${year}`;
 }
 
-function formatDate(ts) {
-  let date;
-  if (!ts) return "N/A";
-  if (typeof ts === "number") {
-    date = new Date(ts);
-  } else if (typeof ts === "object" && "_seconds" in ts) {
-    date = new Date(ts._seconds * 1000);
-  } else if (typeof ts === "string") {
-    date = new Date(ts);
-  } else {
-    return "N/A";
-  }
-  return isNaN(date.getTime())
-    ? "Invalid date"
-    : date.toLocaleDateString();
+function formatDateTime(ts) {
+  const date = fireTimestampToDate(ts)
+  if (isNaN(date.getTime())) return "Invalid date";
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const monthName = months[date.getMonth()];
+  const day = date.getDate();
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${day} ${monthName} ${year}, ${hours}:${minutes}`;
+  ;
 }
 
 export default function AdminPage() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const navigate = useNavigate();
   const { signout } = useAuth();
@@ -81,35 +67,7 @@ export default function AdminPage() {
     }
   };
 
-  {/*}
-  useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Fetch bookings from the booking service
-        const response = await bookingService.getAllBookings();
-
-        // Sort bookings by createdAt (latest first)
-        const sorted = (response.bookings ?? []).sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-        );
-        setBookings(sorted);
-      } catch (err) {
-        console.error("Error fetching bookings:", err);
-        setError("Failed to fetch bookings. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    */}
-  // New state for cancel flow (copied behavior from CustomerBookingPOV)
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [deleting, setDeleting] = useState(false);
-
-  // Hoist fetchBookings so we can reuse it after cancellations
+  // Fetch all bookings
   async function fetchBookings() {
     try {
       setLoading(true);
@@ -118,9 +76,9 @@ export default function AdminPage() {
       // Fetch bookings from the booking service
       const response = await bookingService.getAllBookings();
 
-      // Sort bookings by createdAt (latest first)
+      // Sort bookings by dateTimestamp (latest first)
       const sorted = (response.bookings ?? []).sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        (a, b) => fireTimestampToDate(b.dateTimestamp) - fireTimestampToDate(a.dateTimestamp)
       );
       setBookings(sorted);
     } catch (err) {
@@ -135,39 +93,6 @@ export default function AdminPage() {
     fetchBookings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  function formatDateTime(ts) {
-    let date;
-    if (!ts) return "N/A";
-    if (typeof ts === "number") {
-      date = new Date(ts);
-    } else if (typeof ts === "object" && "_seconds" in ts) {
-      date = new Date(ts._seconds * 1000);
-    } else if (typeof ts === "string") {
-      date = new Date(ts);
-    } else {
-      return "N/A";
-    }
-    return isNaN(date.getTime()) ? "Invalid date" : date.toLocaleString();
-  }
-
-  function formatTime(timestampObj) {
-    let date;
-    if (!timestampObj) return "N/A";
-    if (typeof timestampObj === "number") {
-      date = new Date(timestampObj);
-    } else if (
-      typeof timestampObj === "object" &&
-      "_seconds" in timestampObj
-    ) {
-      date = new Date(timestampObj._seconds * 1000);
-    } else if (typeof timestampObj === "string") {
-      date = new Date(timestampObj);
-    } else {
-      return "N/A";
-    }
-    return isNaN(date.getTime()) ? "Invalid date" : date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
-  }
 
   // Admin cancel handlers (mirroring CustomerBookingPOV behavior)
   const handleDeleteClick = (booking) => setDeleteConfirm(booking);
@@ -219,8 +144,6 @@ export default function AdminPage() {
                   {/* Booking ID removed */}
                   <th className="px-4 py-3 text-left font-mono">Customer Name</th>
                   <th className="px-4 py-3 text-left font-mono">Seat</th>
-                  <th className="px-4 py-3 text-left font-mono">Start Time</th>
-                  <th className="px-4 py-3 text-left font-mono">End Time</th>
                   <th className="px-4 py-3 text-left font-mono">Date Of Booking</th>
                   <th className="px-4 py-3 text-left font-mono">Booked At</th>
                   <th className="px-4 py-3 text-left font-mono">Status</th>
@@ -230,22 +153,18 @@ export default function AdminPage() {
               <tbody>
                 {bookings.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-8 text-gray-500 font-mono">
+                    <td colSpan={6} className="text-center py-8 text-gray-500 font-mono">
                       No bookings found.
                     </td>
                   </tr>
                 ) : (
                   bookings.map((b) => {
-                    const startTime = formatToHHMM(b.startTimestamp);
-                    const endTime = formatToHHMM(b.endTimestamp);
                     const dateOfBooking = formatDate(b.startTimestamp);
                     const isCancelled = (b.status || "").toLowerCase() === "cancelled";
                     return (
-                      <tr key={b.id} className="hover:bg-sky-50 transition">
+                      <tr key={b.id} className={`hover:bg-sky-50 transition ${isCancelled ? 'opacity-60' : ''}`}>
                         <td className="px-4 py-2 font-mono">{b.name}</td>
                         <td className="px-4 py-2 font-mono">{b.deskId}</td>
-                        <td className="px-4 py-2 font-mono">{startTime}</td>
-                        <td className="px-4 py-2 font-mono">{endTime}</td>
                         <td className="px-4 py-2 font-mono">{dateOfBooking}</td>
                         <td className="px-4 py-2 font-mono">{formatDateTime(b.createdAt)}</td>
                         <td className="px-4 py-2 font-mono">{b.status || "active"}</td>
@@ -277,7 +196,7 @@ export default function AdminPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-bold mb-4 text-center">
-              Cancel booking for {formatDate(deleteConfirm.startTimestamp)}?
+              Cancel booking for {formatDate(deleteConfirm.dateTimestamp)}?
             </h3>
             <div className="flex justify-center space-x-4">
               <button
