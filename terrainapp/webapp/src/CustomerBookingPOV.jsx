@@ -17,18 +17,11 @@ function fireTimestampToDate(ts) {
 
 function formatDate(dateInput) {
   const date = fireTimestampToDate(dateInput);
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const dayName = days[date.getDay()];
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${dayName}, ${day}/${month}`;
-}
-
-function formatToHHMM(dateInput) {
-  const date = fireTimestampToDate(dateInput);
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${hours}:${minutes}`;
 }
 
 export default function CustomerBookingPOV() {
@@ -55,7 +48,7 @@ export default function CustomerBookingPOV() {
       const res = await bookingService.getBookingsByName(currentUserName);
       const data = res.bookings || [];
       const sorted = [...data].sort(
-        (a, b) => fireTimestampToDate(b.createdAt) - fireTimestampToDate(a.createdAt)
+        (a, b) => fireTimestampToDate(b.dateTimestamp) - fireTimestampToDate(b.dateTimestamp)
       );
       setBookings(sorted);
     } catch (err) {
@@ -137,8 +130,6 @@ export default function CustomerBookingPOV() {
             <thead>
               <tr className="bg-gray-200">
                 <th className="px-4 py-3 text-left">Date</th>
-                <th className="px-4 py-3 text-left">Start Time</th>
-                <th className="px-4 py-3 text-left">End Time</th>
                 <th className="px-4 py-3 text-left">Desk</th>
                 <th className="px-4 py-3 text-left">Action</th>
               </tr>
@@ -146,16 +137,14 @@ export default function CustomerBookingPOV() {
             <tbody>
               {activeBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-8 text-gray-500">
+                  <td colSpan={3} className="text-center py-8 text-gray-500">
                     No bookings found.
                   </td>
                 </tr>
               ) : (
                 activeBookings.map((b) => (
                   <tr key={b.id} className="hover:bg-sky-50 transition">
-                    <td className="px-4 py-2">{formatDate(b.startTimestamp)}</td>
-                    <td className="px-4 py-2">{formatToHHMM(b.startTimestamp)}</td>
-                    <td className="px-4 py-2">{formatToHHMM(b.endTimestamp)}</td>
+                    <td className="px-4 py-2">{formatDate(b.dateTimestamp)}</td>
                     <td className="px-4 py-2">{b.deskId || b.desk || b.seatNumber}</td>
                     <td className="px-4 py-2">
                       <button
@@ -177,7 +166,7 @@ export default function CustomerBookingPOV() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-bold mb-4 text-center">
-              Cancel booking for {formatDate(deleteConfirm.startTimestamp)}?
+              Cancel booking for {formatDate(deleteConfirm.dateTimestamp)}?
             </h3>
             <div className="flex justify-center space-x-4">
               <button
