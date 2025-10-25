@@ -34,19 +34,6 @@ function formatDate(dateTimestamp) {
   return `${dayName}, ${day} ${monthName} ${year}`;
 }
 
-function formatDateTime(ts) {
-  const date = fireTimestampToDate(ts)
-  if (isNaN(date.getTime())) return "Invalid date";
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const monthName = months[date.getMonth()];
-  const day = date.getDate();
-  const year = date.getFullYear();
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${day} ${monthName} ${year}, ${hours}:${minutes}`;
-  ;
-}
-
 export default function AdminPage() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -141,7 +128,6 @@ export default function AdminPage() {
             <table className="w-full table-auto">
               <thead>
                 <tr className="bg-gray-200">
-                  {/* Booking ID removed */}
                   <th className="px-4 py-3 text-left font-mono">Customer Name</th>
                   <th className="px-4 py-3 text-left font-mono">Seat</th>
                   <th className="px-4 py-3 text-left font-mono">Date Of Booking</th>
@@ -159,14 +145,14 @@ export default function AdminPage() {
                   </tr>
                 ) : (
                   bookings.map((b) => {
-                    const dateOfBooking = formatDate(b.startTimestamp);
+                    const dateOfBooking = formatDate(b.dateTimestamp);
                     const isCancelled = (b.status || "").toLowerCase() === "cancelled";
                     return (
                       <tr key={b.id} className={`hover:bg-sky-50 transition ${isCancelled ? 'opacity-60' : ''}`}>
                         <td className="px-4 py-2 font-mono">{b.name}</td>
                         <td className="px-4 py-2 font-mono">{b.deskId}</td>
                         <td className="px-4 py-2 font-mono">{dateOfBooking}</td>
-                        <td className="px-4 py-2 font-mono">{formatDateTime(b.createdAt)}</td>
+                        <td className="px-4 py-2 font-mono">{formatDate(b.createdAt)}</td>
                         <td className="px-4 py-2 font-mono">{b.status || "active"}</td>
                         <td className="px-4 py-2 font-mono">
                           <button
