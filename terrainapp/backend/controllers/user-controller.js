@@ -14,7 +14,7 @@ const { getAuth } = require("../config/firebase");
  * @returns {void}
  * @throws {Error} If input validation fails or database error occurs.
  * @example
- * POST /users
+ * POST /user
  * createUser(req, res);
  */
 const createUser = async (req, res) => {
@@ -85,7 +85,7 @@ const createUser = async (req, res) => {
  * @returns {void}
  * @throws {Error} If input validation fails or database error occurs.
  * @example
- * GET /users
+ * GET /user
  * getUserByName(req, res);
  */
 const getUserByEmail = async (req, res) => {
@@ -153,7 +153,7 @@ const getUserByEmail = async (req, res) => {
  * @returns {void}
  * @throws {Error} If input validation fails or database error occurs.
  * @example
- * GET /users
+ * GET /user
  * getUserById(req, res);
  */
 const getUserById = async (req, res) => {
@@ -221,7 +221,7 @@ const getUserById = async (req, res) => {
  * @returns {void}
  * @throws {Error} If input validation fails or database error occurs.
  * @example
- * GET /users
+ * GET /user
  * getUserByPhoneNumber(req, res);
  */
 const getUserByPhoneNumber = async (req, res) => {
@@ -291,7 +291,7 @@ const getUserByPhoneNumber = async (req, res) => {
  * @returns {void}
  * @throws {Error} If input validation fails or database error occurs.
  * @example
- * GET /users
+ * GET /user
  * getAllUsers(req, res);
  */
 const getAllUsers = async (req, res) => {
@@ -351,7 +351,7 @@ const getAllUsers = async (req, res) => {
  * @returns {void}
  * @throws {Error} If input validation fails or database error occurs.
  * @example
- * PATCH /users
+ * PATCH /user
  * updateUser(req, res);
  */
 const updateUser = async (req, res) => {
@@ -445,8 +445,8 @@ const updateUser = async (req, res) => {
  * @returns {void}
  * @throws {Error} If input validation fails or database error occurs.
  * @example
- * DELETE /bookings
- * deleteBooking(req, res);
+ * DELETE /user
+ * deleteUser(req, res);
  */
 const deleteUser = async (req, res) => {
     const { email } = req.params;
@@ -500,7 +500,7 @@ const deleteUser = async (req, res) => {
  * @returns {void}
  * @throws {Error} If input validation fails or database error occurs.
  * @example
- * POST /controller
+ * POST /user
  * setAdmin(req, res);
  */
 const setAdmin = async (req, res) => {

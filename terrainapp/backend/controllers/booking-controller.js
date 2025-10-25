@@ -1,6 +1,7 @@
 const logger = require("../logger.js")
 const express = require("express");
 const { db } = require("../config/firebase.js");
+const { getAuth } = require("firebase-admin/auth");
 const ics = require("ics")
 
 /**
@@ -11,41 +12,50 @@ const ics = require("ics")
  * @returns {void}
  * @throws {Error} If input validation fails or database error occurs.
  * @example
- * POST /bookings
+ * POST /booking
  * createBooking(req, res);
  */
 const createBooking = async (req, res) => {
-    const { name, userId, deskId, startTimestamp, endTimestamp } = req.body;
+    const { name, userId, deskId, dateTimestamp } = req.body;
     
     try {
         // Validation
-        if (!name || !userId || !deskId || !startTimestamp || !endTimestamp) {
+        if (!name || !userId || !deskId || !dateTimestamp) {
             return res.status(400).json({
-                error: "Name, userId, deskId, startTimestamp, and endTimestamp are required."
+                error: "Name, userId, deskId, and dateTimestamp are required."
             });
         }
 
         // In case it's passed as a string
-        const startDT = new Date(startTimestamp);
-        const endDT = new Date(endTimestamp)
+        const dateDT = new Date(dateTimestamp);
 
-        // Check if there is already a booking
+        // Check if date is valid
+        if (isNaN(dateDT)) {
+            return res.status(400).json({
+                error: "Invalid dateTimestamp."
+            });
+        }
+
+        // Normalize to start of day for date-only comparison
+        const startOfDay = new Date(dateDT.getFullYear(), dateDT.getMonth(), dateDT.getDate());
+        const endOfDay = new Date(dateDT.getFullYear(), dateDT.getMonth(), dateDT.getDate() + 1);
+
+        // Check if there is already a booking for this desk on this day
         const bookingsSnapshot = await db.collection("bookings")
                                     .where("deskId", "==", deskId)
                                     .where("status", "==", "active")
-                                    .where("startTimestamp", "<", endDT)
+                                    .where("dateTimestamp", ">=", startOfDay)
+                                    .where("dateTimestamp", "<", endOfDay)
                                     .get();
 
         let hasConflict = false;
         let conflictingId = null;
 
-        bookingsSnapshot.forEach(booking => {
-            if(booking.data().endTimestamp.toDate() > startDT) {
-                hasConflict = true;
-                conflictingId = booking.id;
-                return; // Exit foreach loop
-            }
-        })
+        if (!bookingsSnapshot.empty) {
+            const firstDoc = bookingsSnapshot.docs[0];
+            hasConflict = true;
+            conflictingId = firstDoc.id;
+        }
 
         if (hasConflict) {
             return res.status(400).json({
@@ -58,8 +68,7 @@ const createBooking = async (req, res) => {
             name: name,
             userId: userId,
             deskId: deskId,
-            startTimestamp: startDT,
-            endTimestamp: endDT,
+            dateTimestamp: dateDT,
             status: "active",
             createdAt: new Date()
         });
@@ -72,8 +81,7 @@ const createBooking = async (req, res) => {
                 name: name,
                 userId: userId,
                 deskId: deskId,
-                startTimestamp: startDT,
-                endTimestamp: endDT,
+                dateTimestamp: dateDT,
                 status: "active"
             }
         });
@@ -94,7 +102,7 @@ const createBooking = async (req, res) => {
  * @returns {void}
  * @throws {Error} If input validation fails or database error occurs.
  * @example
- * GET /bookings
+ * GET /booking
  * getBookingsByName(req, res);
  */
 const getBookingsByName = async (req, res) => {
@@ -147,7 +155,7 @@ const getBookingsByName = async (req, res) => {
  * @returns {void}
  * @throws {Error} If input validation fails or database error occurs.
  * @example
- * GET /bookings
+ * GET /booking
  * getBookingById(req, res);
  */
 const getBookingById = async (req, res) => {
@@ -187,60 +195,55 @@ const getBookingById = async (req, res) => {
 
 
 /**
- * Summary: Gets bookings by start timestamp
+ * Summary: Gets bookings by date
  *
  * @param {express.Request} req - Express request object containing registration data.
  * @param {express.Response} res - Express response object for sending status and data.
  * @returns {void}
  * @throws {Error} If input validation fails or database error occurs.
  * @example
- * GET /bookings
- * getBookingByStartTimestamp(req, res);
+ * GET /booking
+ * getBookingsByDate(req, res);
  */
-const getBookingByStartTimestamp = async (req, res) => {
-    const { startTimestamp, deskId } = req.query;
+const getBookingsByDate = async (req, res) => {
+    const { dateTimestamp } = req.query;
 
     try {
         // Validation
-        if (!startTimestamp) {
+        if (!dateTimestamp) {
             return res.status(400).json({
-                error: "startTimestamp is required."
+                error: "Date timestamp is required."
             });
         }
 
-        // Also check for deskId if given
-        if (deskId) {
-            const bookingSnapshot = await db.collection("bookings")
-                                            .where("startTimestamp", "==", startTimestamp)
-                                            .where("deskId", "==", deskId)
-                                            .get();
-            if (bookingSnapshot.empty) {
-                return res.status(404).json({ error: "Booking with deskId " + deskId + " not found." });
-            }
+        // In case it's passed as a string
+        const dateDT = new Date(dateTimestamp);
 
-            // Get the first (and only) booking document
-            const booking = bookingSnapshot.docs[0];
-
-            // Success
-            return res.status(200).json({
-                message: "Booking returned successfully.",
-                booking: {
-                    id: booking.id,
-                    ...booking.data()
-                }
+        // Check if date is valid
+        if (isNaN(dateDT)) {
+            return res.status(400).json({
+                error: "Invalid dateTimestamp."
             });
         }
 
-        // Get bookings
-        const bookingsSnapshot = await db.collection("bookings").where("startTimestamp", "==", startTimestamp).get();
+        // Normalize to start of day for date-only comparison
+        const startOfDay = new Date(dateDT.getFullYear(), dateDT.getMonth(), dateDT.getDate());
+        const endOfDay = new Date(dateDT.getFullYear(), dateDT.getMonth(), dateDT.getDate() + 1);
 
-        if (bookingsSnapshot.empty) {
-            return res.status(404).json({ error: "Booking(s) not found." });
+        // Get bookings for the entire day
+        const bookingSnapshot = await db.collection("bookings")
+                                         .where("dateTimestamp", ">=", startOfDay)
+                                         .where("dateTimestamp", "<", endOfDay)
+                                         .get();
+
+        if (bookingSnapshot.empty) {
+            return res.status(200).json({ message: "No bookings found." });
         }
 
-        // Returning all bookings with the timestamp
+        // Returning all bookings with the date
         const bookings = [];
-        bookingsSnapshot.forEach(booking => {
+        
+        bookingSnapshot.forEach(booking => {
             bookings.push({
                 id: booking.id,
                 ...booking.data()
@@ -249,91 +252,15 @@ const getBookingByStartTimestamp = async (req, res) => {
 
         // Success
         return res.status(200).json({
-            message: "Booking(s) returned successfully.",
+            message: "Booking(s) returned by date successfully.",
             bookings: bookings
         });
 
-    } catch (error) {
-        logger.error("Error getting booking(s) by startTimestamp: " + error);
-        return res.status(500).json({
-            error: "Internal server error"
-        });
-    }
-}
-
-
-/**
- * Summary: Gets bookings by end timestamp
- *
- * @param {express.Request} req - Express request object containing registration data.
- * @param {express.Response} res - Express response object for sending status and data.
- * @returns {void}
- * @throws {Error} If input validation fails or database error occurs.
- * @example
- * GET /bookings
- * getBookingByEndTimestamp(req, res);
- */
-const getBookingByEndTimestamp = async (req, res) => {
-    const { endTimestamp, deskId } = req.query;
-
-    try {
-        // Validation
-        if (!endTimestamp) {
-            return res.status(400).json({
-                error: "endTimestamp is required."
-            });
-        }
-
-        // Also check for deskId if given
-        if (deskId) {
-            const bookingSnapshot = await db.collection("bookings")
-                                            .where("endTimestamp", "==", endTimestamp)
-                                            .where("deskId", "==", deskId)
-                                            .get();
-            if (bookingSnapshot.empty) {
-                return res.status(404).json({ error: "Booking with deskId " + deskId + " not found." });
-            }
-
-            // Get the first (and only) booking document
-            const booking = bookingSnapshot.docs[0];
-
-            // Success
-            return res.status(200).json({
-                message: "Booking returned successfully.",
-                booking: {
-                    id: booking.id,
-                    ...booking.data()
-                }
-            });
-        }
-
-
-        // Get bookings
-        const bookingsSnapshot = await db.collection("bookings").where("endTimestamp", "==", endTimestamp).get();
-
-        if (bookingsSnapshot.empty) {
-            return res.status(404).json({ error: "Booking(s) not found." });
-        }
-
-        // Returning all bookings with the timestamp
-        const bookings = [];
-        bookingsSnapshot.forEach(booking => {
-            bookings.push({
-                id: booking.id,
-                ...booking.data()
-            });
-        });
-
-        // Success
-        return res.status(200).json({
-            message: "Booking(s) returned successfully.",
-            bookings: bookings
-        });
 
     } catch (error) {
-        logger.error("Error getting booking(s) by endTimestamp: " + error);
+        logger.error("Error getting bookings by date: " + error);
         return res.status(500).json({
-            error: "Internal server error"
+            error: "Internal server error."
         });
     }
 }
@@ -347,7 +274,7 @@ const getBookingByEndTimestamp = async (req, res) => {
  * @returns {void}
  * @throws {Error} If input validation fails or database error occurs.
  * @example
- * GET /bookings
+ * GET /booking
  * getAllBookings(req, res);
  */
 const getAllBookings = async (req, res) => {
@@ -392,16 +319,26 @@ const getAllBookings = async (req, res) => {
  * @returns {void}
  * @throws {Error} If input validation fails or database error occurs.
  * @example
- * PATCH /bookings
+ * PATCH /booking
  * updateBooking(req, res);
  */
 const updateBooking = async (req, res) => {
     const { id } = req.params;
-    const { name, userId, deskId, startTimestamp, endTimestamp } = req.body;
+    const { name, userId, deskId, dateTimestamp } = req.body;
     try {
         // Validation
         if (!id) {
             return res.status(400).json({ error: "id is required." });
+        }
+
+        // In case it's passed as a string
+        const dateDT = new Date(dateTimestamp);
+
+        // Check if date is valid
+        if (dateTimestamp != undefined && isNaN(dateDT)) {
+            return res.status(400).json({
+                error: "Invalid dateTimestamp."
+            });
         }
 
         // Save old data
@@ -420,8 +357,7 @@ const updateBooking = async (req, res) => {
         if (name != undefined) updateData.name = name;
         if (userId != undefined) updateData.userId = userId;
         if (deskId != undefined) updateData.deskId = deskId;
-        if (startTimestamp != undefined) updateData.startTimestamp = startTimestamp;
-        if (endTimestamp != undefined) updateData.endTimestamp = endTimestamp;
+        if (dateTimestamp != undefined) updateData.dateTimestamp = dateDT;
         if (oldData) updateData.oldModifications = oldData;
         updateData.updatedAt = new Date();
 
@@ -461,7 +397,7 @@ const updateBooking = async (req, res) => {
  * @returns {void}
  * @throws {Error} If input validation fails or database error occurs.
  * @example
- * PATCH /bookings
+ * PATCH /booking
  * cancelBooking(req, res);
  */
 const cancelBooking = async (req, res) => {
@@ -516,7 +452,7 @@ const cancelBooking = async (req, res) => {
  * @returns {void}
  * @throws {Error} If input validation fails or database error occurs.
  * @example
- * DELETE /bookings
+ * DELETE /booking
  * deleteBooking(req, res);
  */
 const deleteBooking = async (req, res) => {
@@ -577,7 +513,7 @@ const deleteBooking = async (req, res) => {
  * @returns {void}
  * @throws {Error} If input validation fails or if database returns an error.
  * @example
- * GET /bookings
+ * GET /booking
  * generateICSFileforBooking(req, res);
  */
 const generateICSFileforBooking = async ( req, res ) => {
@@ -602,18 +538,15 @@ const generateICSFileforBooking = async ( req, res ) => {
 
         // Extract the data as key value pairs
         const latestBookingData = latestDoc.data();
-
-        // Get the start time and end time of the booking
-        const startTime = latestBookingData.startTimestamp.toDate();
-        const endTime = latestBookingData.endTimestamp.toDate();
+        // Get the booking date
+        const bookingDate = latestBookingData.dateTimestamp.toDate();
 
         // Extract the data needed for the creation of the ICS file
         const booking = {
             title: "Desk Booking",
             description: "Desk booking at TERRAIN",
             location: "101-103 Brunswick St, Fitzroy VIC 3065",
-            start: [startTime.getFullYear(), startTime.getMonth() + 1, startTime.getDate(), startTime.getHours(), startTime.getMinutes()],
-            end:[endTime.getFullYear(), endTime.getMonth() + 1, endTime.getDate(), endTime.getHours(), endTime.getMinutes()],
+            start: [bookingDate.getFullYear(), bookingDate.getMonth() + 1, bookingDate.getDate()],
             status: 'CONFIRMED'
         }
 
@@ -635,10 +568,6 @@ const generateICSFileforBooking = async ( req, res ) => {
         logger.error(err, "Error in generateICSFileforBooking");
         return res.status(500).json({error: "An internal server error occured. "})
     }
-
-    
-
-
 }
 
-module.exports = { createBooking, getBookingsByName, getBookingById, getBookingByStartTimestamp, getBookingByEndTimestamp, getAllBookings, updateBooking, cancelBooking, deleteBooking, generateICSFileforBooking }
+module.exports = { createBooking, getBookingsByName, getBookingById, getBookingsByDate, getAllBookings, updateBooking, cancelBooking, deleteBooking, generateICSFileforBooking }
