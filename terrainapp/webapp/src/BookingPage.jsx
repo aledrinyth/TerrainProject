@@ -244,86 +244,38 @@ const onAddToCalendar = async ({ userId }) => {
   try {
       console.log('Fetching ICS file for user:', userId);
       
-      // Grab the ICS data from the service
-      // const icsContent = await bookingService.generateICSFile(userId);
-
-
-      const icsContent = await fetch(`${API_BASE_URL}/booking/ics/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
+      // Use the booking service to get ICS content
+      const icsContent = await bookingService.generateICSFile(userId);
       console.log('ICS content received:', icsContent);
       
-      if (!icsContent) {
+      if (!icsContent || icsContent.trim() === '') {
         alert('No booking data found. Please try again.');
         return;
       }
       
       // Create a blob from the ICS string and download it
-      const file = new Blob([icsContent], { type: 'text/calendar' });
+      const file = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
       const url = URL.createObjectURL(file);
 
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'booking.ics');
+      link.download = 'terrain-booking.ics';
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
 
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
       
       console.log('Calendar file downloaded successfully');
   } catch (error) {
       console.error('Error creating calendar event:', error);
-      alert('Failed to create calendar event. Please try again.');
+      alert('Failed to create calendar event: ' + error.message);
   }
-};
-
-// Function to create ICS file and download it
-const onAddToCalendar = async ({ userId }) => {
-  try {
-      console.log('Fetching ICS file for user:', userId);
-      
-      // Grab the ICS data from the service
-      // const icsContent = await bookingService.generateICSFile(userId);
-
-
-      const icsContent = await fetch(`${API_BASE_URL}/booking/ics/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      console.log('ICS content received:', icsContent);
-      
-      if (!icsContent) {
-        alert('No booking data found. Please try again.');
-        return;
-      }
-      
-      // Create a blob from the ICS string and download it
-      const file = new Blob([icsContent], { type: 'text/calendar' });
-      const url = URL.createObjectURL(file);
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'booking.ics');
-      document.body.appendChild(link);
-      link.click();
-
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      console.log('Calendar file downloaded successfully');
-  } catch (error) {
-      console.error('Error creating calendar event:', error);
-      alert('Failed to create calendar event. Please try again.');
-  }
-};
+}
 
 // Success notification component
 const SuccessNotification = ({ message, isVisible, onClose, onAddToCalendar }) => {
@@ -556,6 +508,7 @@ const handleBookingSubmit = async (bookingData) => {
         message={successMessage}
         isVisible={showSuccess}
         onClose={() => setShowSuccess(false)}
+        onAddToCalendar={() => onAddToCalendar({ userId: currentUser })}
       />
 
       {/* The header is positioned absolutely relative to the main container */}

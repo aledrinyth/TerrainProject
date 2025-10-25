@@ -547,6 +547,7 @@ const generateICSFileforBooking = async ( req, res ) => {
             description: "Desk booking at TERRAIN",
             location: "101-103 Brunswick St, Fitzroy VIC 3065",
             start: [bookingDate.getFullYear(), bookingDate.getMonth() + 1, bookingDate.getDate()],
+            end: [bookingDate.getFullYear(), bookingDate.getMonth() + 1, bookingDate.getDate() + 1],
             status: 'CONFIRMED'
         }
 
@@ -558,8 +559,10 @@ const generateICSFileforBooking = async ( req, res ) => {
         }
 
         // Set the correct headers to trigger a file download
-        res.setHeader('Content-Type', 'text/calendar');
-        res.setHeader('Content-Disposition', 'attachment; filename="booking.ics"');
+        res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="terrain-booking.ics"');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Content-Length', Buffer.byteLength(value, 'utf8'));
 
         // Send the generated ICS file as the response
         return res.status(200).send(value);

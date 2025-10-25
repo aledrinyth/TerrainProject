@@ -55,9 +55,19 @@ export const bookingService = {
     },
 
     // Generate an ICS file for a user to add to their calendar
-    generateICSFile: async (id) => {
-        return apiRequest(`booking/ics/${id}`, {
-            method: "GET"
+    generateICSFile: async (userId) => {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:6969'}/api/booking/ics/${userId}`, {
+            method: "GET",
+            headers: {
+                'Accept': 'text/calendar'
+            }
         });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to generate ICS file');
+        }
+        
+        return await response.text();
     }
 };
