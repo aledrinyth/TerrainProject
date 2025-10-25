@@ -52,5 +52,12 @@ export const bookingService = {
         return apiRequest(`/booking/${id}`, {
             method: "DELETE"
         });
+    },
+
+    // Generate an ICS file for a user to add to their calendar
+    generateICSFile: async (id) => {
+        return apiRequest(`booking/ics/${id}`, {
+            method: "GET"
+        });
     }
 };

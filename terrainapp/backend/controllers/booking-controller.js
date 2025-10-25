@@ -538,7 +538,6 @@ const generateICSFileforBooking = async ( req, res ) => {
 
         // Extract the data as key value pairs
         const latestBookingData = latestDoc.data();
-
         // Get the booking date
         const bookingDate = latestBookingData.dateTimestamp.toDate();
 
@@ -566,7 +565,7 @@ const generateICSFileforBooking = async ( req, res ) => {
         return res.status(200).send(value);
     }
     catch (err) {
-        logger.error("Error in generateICSFileforBooking", err);
+        logger.error(err, "Error in generateICSFileforBooking");
         return res.status(500).json({error: "An internal server error occured. "})
     }
 }
