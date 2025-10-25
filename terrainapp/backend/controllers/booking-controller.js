@@ -538,7 +538,6 @@ const generateICSFileforBooking = async ( req, res ) => {
 
         // Extract the data as key value pairs
         const latestBookingData = latestDoc.data();
-
         // Get the booking date
         const bookingDate = latestBookingData.dateTimestamp.toDate();
 
