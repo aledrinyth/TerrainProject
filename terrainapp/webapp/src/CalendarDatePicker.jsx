@@ -50,7 +50,7 @@ const CalendarDatePicker = ({ selectedDate, onDateSelect, onClose }) => {
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(year, month, day);
     date.setHours(0, 0, 0, 0);
-    const dateString = date.toISOString().split('T')[0];
+    const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const isSelected = dateString === selectedDate;
     const isPast = date < today;
     const isToday = date.getTime() === today.getTime();
