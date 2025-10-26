@@ -83,7 +83,7 @@ export default function Login() {
       alert('Password reset email sent! Please check your inbox and spam folder.');
     } catch (error) {
       if (error.code === 'auth/user-not-found') {
-        alert('No account found with this email address.');
+        alert('If an account exists with this email, a password reset link has been sent.');
       } else if (error.code === 'auth/invalid-email') {
         alert('Please enter a valid email address.');
       } else {
