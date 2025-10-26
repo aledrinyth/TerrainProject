@@ -122,9 +122,9 @@ export default function Login() {
             ENTER
           </button>
         </form>
-        <a href="#" onClick={handleForgotPassword} className="font-mono text-sm mt-2 hover:underline cursor-pointer">
+        <button type="button" onClick={handleForgotPassword} className="font-mono text-sm mt-2 hover:underline cursor-pointer bg-transparent border-none p-0">
           FORGOT PASSWORD?
-        </a>
+        </button>
       </main>
     </div>
   );
