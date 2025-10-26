@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { API_BASE_URL } from '../src/config';
 import { bookingService } from './services/bookingService';
+import CalendarDatePicker from './CalendarDatePicker';
 
 // A reusable component for the green/red seat indicators.
 const SeatCircle = ({ seatNumber, isBooked, isSelected, onSelect, isLoading }) => {
-  // This code block determines the colors based on state
   let bgColor, borderColor, cursor;
   if (isLoading) {
     bgColor = "bg-gray-100";
@@ -160,12 +160,11 @@ const BookingModal = ({ isOpen, onClose, selectedDate, selectedSeats, onBookingS
 };
 
 // A reusable component for an entire desk section.
-const Desk = ({ deskName, seatNumberOffset = 0, seatAvailability, selectedSeats, onSeatSelect, isLoading }) => {
+const Desk = ({ seatNumberOffset = 0, seatAvailability, selectedSeats, onSeatSelect, isLoading }) => {
   const seatNumbers = [1, 2, 3, 4].map(n => n + seatNumberOffset);
   
   return (
     <div className="w-full md:w-[545px] h-[459px] bg-gray-200 border-2 border-black rounded-lg flex flex-col p-6">
-      {/*<h3 className="font-mono text-3xl font-bold text-center mb-6">{deskName}</h3>*/}
       
       <div className="flex-grow flex items-center justify-center gap-8 w-full">
         {/* Left Seats */}
@@ -279,11 +278,6 @@ const onAddToCalendar = async ({ userId }) => {
 
 // Success notification component
 const SuccessNotification = ({ message, isVisible, onClose, onAddToCalendar }) => {
-  useEffect(() => {
-
-
-  }, [isVisible, onClose]);
-
   if (!isVisible) return null;
 
   return (
@@ -318,6 +312,18 @@ export default function App() {
   const { user , signout } = useAuth();
   const currentUser = user?.uid || 'unknown';
   const currentUserName = user?.displayName || user?.email?.split('@')[0] || 'User';
+
+  const formatSelectedDate = (dateString) => {
+    if (!dateString) return "Select a Date";
+    const [year, month, day] = dateString.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    return `Selected: ${date.toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    })}`;
+  };
 
   // Fetch seat availability for a specific date - ENHANCED to get real booking data
 const fetchSeatAvailability = async (date) => {
@@ -527,7 +533,6 @@ const handleBookingSubmit = async (bookingData) => {
           {/* Logout button */}
           <button
             onClick={handleLogout}
-            // Removed style={{marginRight: '16px'}} as space-x-4 handles spacing
             className="px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-600 transition-colors font-sans font-semibold"
           >
             Logout
@@ -540,21 +545,28 @@ const handleBookingSubmit = async (bookingData) => {
         <div className="relative">
           <button
             onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-sans font-semibold"
+            className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-sans font-semibold text-lg shadow-md hover:shadow-lg flex items-center gap-2"
           >
-            {selectedDate ? `Date: ${selectedDate}` : "Select Date"}
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            {formatSelectedDate(selectedDate)}
+            {/* Dropdown Arrow */}
+            <svg className={`w-4 h-4 transition-transform ${isDatePickerOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
           </button>
           {isDatePickerOpen && (
-            <input
-              data-testid="date-input"
-              type="date"
-              className="absolute left-0 top-12 bg-white border p-2 rounded shadow z-10"
-              value={selectedDate}
-              onChange={handleDateChange}
-              min={new Date().toISOString().split('T')[0]}
-              autoFocus
-              onBlur={() => setIsDatePickerOpen(false)}
-            />
+            <CalendarDatePicker
+              selectedDate={selectedDate}
+              onDateSelect={(date) => {
+                setSelectedDate(date);
+                setIsDatePickerOpen(false);
+                setSelectedSeats([]); // Clear selected seats when date changes
+                fetchSeatAvailability(date);
+              }}
+              onClose={() => setIsDatePickerOpen(false)}
+            />  
           )}
         </div>
         
