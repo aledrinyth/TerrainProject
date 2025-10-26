@@ -1,6 +1,5 @@
-import React from 'react';
 import { useState } from 'react';
-import { signInWithEmailAndPassword, getIdTokenResult } from 'firebase/auth';
+import { signInWithEmailAndPassword, getIdTokenResult, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
@@ -71,6 +70,29 @@ export default function Login() {
     }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    
+    if (!username || username.trim() === '') {
+      alert('Please enter your email address in the EMAIL field first, then click FORGOT PASSWORD.');
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, username);
+      alert('Password reset email sent! Please check your inbox and spam folder.');
+    } catch (error) {
+      if (error.code === 'auth/user-not-found') {
+        alert('If an account exists with this email, a password reset link has been sent.');
+      } else if (error.code === 'auth/invalid-email') {
+        alert('Please enter a valid email address.');
+      } else {
+        console.error('Password reset error:', error);
+        alert('Failed to send reset email. Please try again later.');
+      }
+    }
+  };
+
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen font-sans bg-gray-100">
       
@@ -100,9 +122,9 @@ export default function Login() {
             ENTER
           </button>
         </form>
-        <a href="#" className="font-mono text-sm mt-2 hover:underline">
+        <button type="button" onClick={handleForgotPassword} className="font-mono text-sm mt-2 hover:underline cursor-pointer bg-transparent border-none p-0">
           FORGOT PASSWORD?
-        </a>
+        </button>
       </main>
     </div>
   );
