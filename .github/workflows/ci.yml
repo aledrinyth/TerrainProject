@@ -14,11 +14,11 @@ jobs:
       matrix:
         pkg:
           - name: backend
-            path: backend
-            lock: backend/package-lock.json
-          - name: frontend
-            path: frontend
-            lock: frontend/package-lock.json
+            path: terrainapp/backend
+            lock: terrainapp/backend/package-lock.json
+          - name: webapp
+            path: terrainapp/webapp
+            lock: terrainapp/webapp/package-lock.json
 
     defaults:
       run:
@@ -28,34 +28,98 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Debug tree (paths & lockfiles)
-        run: |
-          echo "repo root:"
-          ls -la
-          echo "package dir:"
-          ls -la .
-          echo "lockfile? -> $LOCK"
-        env:
-          LOCK: ${{ matrix.pkg.lock }}
-
-      - name: Setup Node
+      - name: Setup Node (v20) + npm cache
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: ${{ matrix.pkg.lock }}
 
-      - name: Install
+      - name: Install deps
         run: |
           if [ -f package-lock.json ]; then
             npm ci
           else
-            echo "WARN: package-lock.json missing; using npm install (no cache key)."
+            echo "WARN: package-lock.json missing; using npm install"
             npm install
           fi
 
-      - name: Run unit tests
+      - name: Run unit tests (Jest)
         env:
           CI: true
           NODE_ENV: test
         run: npm test -- --ci --runInBand
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    defaults:
+      run:
+        working-directory: terrainapp/e2e
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node (v20) + npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            terrainapp/e2e/package-lock.json
+            terrainapp/backend/package-lock.json
+            terrainapp/webapp/package-lock.json
+
+      # Install each workspace's deps (so dev:api/dev:web can run)
+      - name: Install e2e deps
+        run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Install backend deps
+        working-directory: terrainapp/backend
+        run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Install webapp deps
+        working-directory: terrainapp/webapp
+        run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Install Playwright browsers
+        working-directory: terrainapp/e2e
+        run: npm run install:browsers
+
+      - name: Start services (Emulators, API, Web) and wait
+        env:
+          # API & emulator wiring expected by your scripts
+          NODE_ENV: development
+          GCP_PROJECT: demo-terrain
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          VITE_API_BASE_URL: http://localhost:6969/api
+        run: |
+          # Start emulators (no UI flag is not needed/allowed on CLI versions)
+          npx --yes concurrently -k -n EMU,API,WEB,WAIT \
+            "npm:dev:emu" \
+            "npm:dev:api" \
+            "npm:dev:web" \
+            "npm:wait:all"
+
+        # The commands above come from terrainapp/e2e/package.json:
+        # - dev:emu -> firebase emulators:start --only auth,firestore --project demo-terrain
+        # - dev:api -> node ../backend/server.js with env vars
+        # - dev:web -> vite dev in ../webapp with VITE_API_BASE_URL
+        # - wait:all -> wait-on tcp:8080 tcp:9099 http://localhost:6969/api/health http://localhost:5173/login
+
+      - name: Seed Firestore & Auth
+        run: npm run seed:all
+
+      - name: Run Playwright E2E (headless, serialized)
+        env:
+          CI: true
+        run: npm run ci:test
+
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: terrainapp/e2e/playwright-report
+          if-no-files-found: ignore
