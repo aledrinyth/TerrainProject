@@ -11,15 +11,15 @@
     "test": "jest"
   },
   "dependencies": {
-    "express": "^5.1.0",
     "cors": "^2.8.5",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "react-router-dom": "^7.6.3",
-    "ics": "^3.0.0",
+    "express": "^5.1.0",
     "firebase-admin": "^13.5.0",
     "firebase-functions": "^6.4.0",
-    "pino": "^9.9.5"
+    "ics": "^3.0.0",
+    "pino": "^9.9.5",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.6.3"
   },
   "devDependencies": {
     "@babel/core": "^7.28.4",

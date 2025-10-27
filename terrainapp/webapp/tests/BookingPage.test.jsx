@@ -2,16 +2,51 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 
-// IMPORTANT: mock the config module *before* importing the component,
-// and do it as a virtual module so Jest doesn't try to parse the real file.
+// Mock config
 jest.mock('../src/config', () => ({
   __esModule: true,
   API_BASE_URL: 'http://test-api.local/api',
-}), { virtual: true });
+}));
+
+// Mock CalendarDatePicker (component imports './CalendarDatePicker')
+jest.mock('../src/CalendarDatePicker', () => ({
+  __esModule: true,
+  default: ({ selectedDate, onDateSelect }) => (
+    <input
+      data-testid="date-input"
+      type="date"
+      value={selectedDate}
+      onChange={(e) => onDateSelect(e.target.value)}
+    />
+  ),
+}));
+
+// Mock bookingService — define fns INSIDE the factory (no out-of-scope refs)
+jest.mock('../src/services/bookingService', () => {
+  const mockGetBookingsByDate = jest.fn();
+  const mockGenerateICSFile = jest.fn();
+  return {
+    __esModule: true,
+    bookingService: {
+      getBookingsByDate: mockGetBookingsByDate,
+      generateICSFile: mockGenerateICSFile,
+    },
+  };
+});
+
+// Mock Firebase (Auth)
+jest.mock('../firebase.js', () => ({
+  auth: {
+    currentUser: { uid: 'mock-user', email: 'user@example.com' },
+    signOut: jest.fn(),
+  },
+  db: {},
+}));
 
 // Mock react-router-dom navigate
+const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
-  useNavigate: jest.fn(() => jest.fn()),
+  useNavigate: () => mockNavigate,
 }));
 
 // Mock AuthContext
@@ -19,7 +54,9 @@ jest.mock('../contexts/AuthContext.jsx', () => ({
   useAuth: () => ({ user: { uid: 'mock-user', email: 'user@example.com' } }),
 }));
 
-// Component under test (after mocks)
+// Import the mocked bookingService so we can set returns/assert calls
+import { bookingService } from '../src/services/bookingService';
+// Component under test
 import BookingPage from '../src/BookingPage.jsx';
 
 // Clean DOM after each test
@@ -28,18 +65,19 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-// Mock global fetch
+// Mock global fetch for POST /booking
 global.fetch = jest.fn();
 
-// Silence noisy logs during test runs
+// Quiet console during tests
+let logSpy, errSpy;
 beforeAll(() => {
-  jest.spyOn(console, 'log').mockImplementation(() => {});
-  jest.spyOn(console, 'error').mockImplementation(() => {});
+  logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+  errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
 afterAll(() => {
-  console.log.mockRestore();
-  console.error.mockRestore();
+  logSpy.mockRestore();
+  errSpy.mockRestore();
 });
 
 describe('BookingPage (booking UI flows)', () => {
@@ -47,39 +85,34 @@ describe('BookingPage (booking UI flows)', () => {
     render(<BookingPage />);
     expect(screen.getByAltText(/Terrain Logo/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Logout/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Select Date/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Select.*Date/i })).toBeInTheDocument();
   });
 
   test('shows date input when Select Date button is clicked', () => {
     render(<BookingPage />);
-    const dateBtn = screen.getByRole('button', { name: /Select Date/i });
+    const dateBtn = screen.getByRole('button', { name: /Select.*Date/i });
     fireEvent.click(dateBtn);
     expect(screen.getByTestId('date-input')).toBeInTheDocument();
   });
 
-  test('fetches seat availability when a date is selected', async () => {
-    fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => [],
-    });
+  test('requests seat availability via bookingService when a date is selected', async () => {
+    bookingService.getBookingsByDate.mockResolvedValueOnce([]); // no bookings
 
     render(<BookingPage />);
-    fireEvent.click(screen.getByRole('button', { name: /Select Date/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Select.*Date/i }));
     fireEvent.change(screen.getByTestId('date-input'), { target: { value: '2025-09-28' } });
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/bookings?date=2025-09-28'),
-        expect.objectContaining({ method: 'GET' })
-      );
+      expect(bookingService.getBookingsByDate).toHaveBeenCalledTimes(1);
+      expect(bookingService.getBookingsByDate).toHaveBeenCalledWith('2025-09-28T00:00:00.000Z');
     });
   });
 
   test('clicking a seat opens the booking modal', async () => {
-    fetch.mockResolvedValueOnce({ ok: true, json: async () => [] });
+    bookingService.getBookingsByDate.mockResolvedValueOnce([]); // all seats available
 
     render(<BookingPage />);
-    fireEvent.click(screen.getByRole('button', { name: /Select Date/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Select.*Date/i }));
     fireEvent.change(screen.getByTestId('date-input'), { target: { value: '2025-09-28' } });
 
     await waitFor(() => {
@@ -87,36 +120,14 @@ describe('BookingPage (booking UI flows)', () => {
     });
 
     fireEvent.click(screen.getByText('1'));
-    await screen.findByText(/New Booking/i);
-  });
-
-  test('shows validation error when end time is before start time', async () => {
-    fetch.mockResolvedValueOnce({ ok: true, json: async () => [] });
-
-    render(<BookingPage />);
-    fireEvent.click(screen.getByRole('button', { name: /Select Date/i }));
-    fireEvent.change(screen.getByTestId('date-input'), { target: { value: '2025-09-28' } });
-
-    await waitFor(() => {
-      expect(screen.getByText('1')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByText('1'));
-    await screen.findByText(/New Booking/i);
-
-    fireEvent.change(screen.getByLabelText(/Start Time/i), { target: { value: '10:00' } });
-    fireEvent.change(screen.getByLabelText(/End Time/i), { target: { value: '09:00' } });
-
-    fireEvent.click(screen.getByRole('button', { name: /Book Seats/i }));
-    expect(await screen.findByText(/End time must be after start time/i)).toBeInTheDocument();
+    expect(await screen.findByText(/New Booking/i)).toBeInTheDocument();
   });
 
   test('closes modal when Cancel button is clicked', async () => {
-    fetch.mockResolvedValueOnce({ ok: true, json: async () => [] });
+    bookingService.getBookingsByDate.mockResolvedValueOnce([]);
 
     render(<BookingPage />);
-
-    fireEvent.click(screen.getByRole('button', { name: /Select Date/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Select.*Date/i }));
     fireEvent.change(screen.getByTestId('date-input'), { target: { value: '2025-09-28' } });
 
     await waitFor(() => {
@@ -124,7 +135,7 @@ describe('BookingPage (booking UI flows)', () => {
     });
 
     fireEvent.click(screen.getByText('1'));
-    await screen.findByText(/New Booking/i);
+    expect(await screen.findByText(/New Booking/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Cancel/i }));
     await waitFor(() => {
@@ -133,31 +144,46 @@ describe('BookingPage (booking UI flows)', () => {
   });
 
   test('submits booking and shows success notification', async () => {
-    // 1st call: GET /bookings → []
-    // 2nd call: POST /booking → { message: 'Success' }
-    fetch
-      .mockResolvedValueOnce({ ok: true, json: async () => [] })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ message: 'Success' }) });
+    // Availability call
+    bookingService.getBookingsByDate.mockResolvedValueOnce([]);
+
+    // POST /booking
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ message: 'Success' }),
+      text: async () => 'Success',
+    });
 
     render(<BookingPage />);
-
-    fireEvent.click(screen.getByRole('button', { name: /Select Date/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Select.*Date/i }));
     fireEvent.change(screen.getByTestId('date-input'), { target: { value: '2025-09-28' } });
 
     await waitFor(() => {
       expect(screen.getByText('1')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('1'));
-    await screen.findByText(/New Booking/i);
+    fireEvent.click(screen.getByText('1')); // select seat → opens modal
+    expect(await screen.findByText(/New Booking/i)).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText(/Start Time/i), { target: { value: '09:00' } });
-    fireEvent.change(screen.getByLabelText(/End Time/i), { target: { value: '10:00' } });
-
-    fireEvent.click(screen.getByRole('button', { name: /Book Seats/i }));
+    // Click "Book" (no time fields in current UI)
+    fireEvent.click(screen.getByRole('button', { name: /^Book$/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/Successfully booked/i)).toBeInTheDocument();
     });
+
+    // Ensure a single POST was made
+    expect(fetch).toHaveBeenCalledTimes(1);
+    const [url, init] = fetch.mock.calls[0];
+    expect(url).toMatch(/\/booking$/);
+    expect(init.method).toBe('POST');
+    const body = JSON.parse(init.body);
+    expect(body).toEqual(
+      expect.objectContaining({
+        deskId: 1,
+        userId: 'mock-user',
+        dateTimestamp: expect.any(String),
+      })
+    );
   });
 });

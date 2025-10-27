@@ -1,15 +1,28 @@
+// tests/AdminPage.test.jsx
 import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
-import AdminPage from '../src/AdminPage';
+import { MemoryRouter } from 'react-router-dom';
 
-// 🧩 Mock bookingService
-jest.mock('../src/services/bookingService', () => ({
-  bookingService: {
-    getAllBookings: jest.fn(),
-  },
+// Mock bookingService (functions defined inside factory)
+jest.mock('../src/services/bookingService', () => {
+  const mockGetAllBookings = jest.fn();
+  const mockCancelBooking = jest.fn();
+  return {
+    __esModule: true,
+    bookingService: {
+      getAllBookings: mockGetAllBookings,
+      cancelBooking: mockCancelBooking,
+    },
+  };
+});
+
+// mock the SAME module ID used by AdminPage.jsx
+// AdminPage imports: ../contexts/AuthContext.jsx (one level above src)
+jest.mock('../contexts/AuthContext.jsx', () => ({
+  useAuth: () => ({ signout: jest.fn() }),
 }));
 
-// 🧹 Silence console.error for API errors
+// Keep test output clean
 const originalError = console.error;
 beforeAll(() => {
   console.error = (...args) => {
@@ -21,53 +34,57 @@ afterAll(() => {
   console.error = originalError;
 });
 
+// Import after mocks
+import AdminPage from '../src/AdminPage.jsx';
+import { bookingService } from '../src/services/bookingService';
+
+const renderWithRouter = (ui) => render(<MemoryRouter>{ui}</MemoryRouter>);
+
 describe('AdminPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  // ✅ Test 1: Successful fetch → table rendered and sorted
-  test('renders table, sorts rows by createdAt desc, and shows correct data', async () => {
+  test('renders table, sorts by dateTimestamp desc, and shows correct data', async () => {
+    // Sorted newest to oldest by dateTimestamp
     const mockBookings = {
       bookings: [
         {
-          id: '1',
-          name: 'Alice',
-          deskId: 'Desk 1',
-          startTimestamp: '2025-09-28T09:00:00',
-          endTimestamp: '2025-09-28T11:00:00',
-          createdAt: '2025-09-27T09:00:00',
-        },
-        {
           id: '2',
           name: 'Bob',
-          deskId: 'Desk 2',
-          startTimestamp: '2025-09-28T10:00:00',
-          endTimestamp: '2025-09-28T13:00:00',
-          createdAt: '2025-09-28T12:00:00', // newest
+          deskId: 2,
+          dateTimestamp: '2025-09-30T00:00:00.000Z', // newest
+          createdAt: '2025-09-28T12:00:00.000Z',
+          status: 'active',
+        },
+        {
+          id: '1',
+          name: 'Alice',
+          deskId: 1,
+          dateTimestamp: '2025-09-29T00:00:00.000Z',
+          createdAt: '2025-09-27T09:00:00.000Z',
+          status: 'active',
         },
         {
           id: '3',
           name: 'Charlie',
-          deskId: 'Desk 3',
-          startTimestamp: '2025-09-28T08:00:00',
-          endTimestamp: '2025-09-28T10:00:00',
-          createdAt: '2025-09-26T08:00:00', // oldest
+          deskId: 3,
+          dateTimestamp: '2025-09-28T00:00:00.000Z', // oldest
+          createdAt: '2025-09-26T08:00:00.000Z',
+          status: 'cancelled',
         },
       ],
     };
-
-    const { bookingService } = require('../src/services/bookingService');
     bookingService.getAllBookings.mockResolvedValueOnce(mockBookings);
 
-    render(<AdminPage />);
+    renderWithRouter(<AdminPage />);
 
-    // Wait for rows to render
+    // Wait for tbody rows to appear
     await waitFor(() => {
-      const rows = screen
+      const bodyRows = screen
         .getAllByRole('row')
         .filter((r) => r.closest('tbody') && !r.textContent.includes('No bookings'));
-      expect(rows.length).toBeGreaterThan(0);
+      expect(bodyRows.length).toBe(3);
     });
 
     const table = screen.getByRole('table');
@@ -75,52 +92,33 @@ describe('AdminPage', () => {
       .getAllByRole('row')
       .filter((r) => r.closest('tbody') && !r.textContent.includes('No bookings'));
 
-    expect(rows).toHaveLength(3);
+    // Order by dateTimestamp DESC → Bob, Alice, Charlie
+    const namesInOrder = rows.map((r) => within(r).getAllByRole('cell')[0].textContent.trim());
+    expect(namesInOrder).toEqual(['Bob', 'Alice', 'Charlie']);
 
-    // Sorted by createdAt DESC → [2, 1, 3]
-    const idsInOrder = rows.map((r) => within(r).getAllByRole('cell')[0].textContent.trim());
-    expect(idsInOrder).toEqual(['2', '1', '3']);
+    // Columns: [0] Name, [1] Seat, [2] Date Of Booking, [3] Booked At, [4] Status, [5] Action
+    const bobCells = within(rows[0]).getAllByRole('cell');
+    expect(bobCells[0]).toHaveTextContent('Bob');
+    expect(bobCells[1]).toHaveTextContent('2');
+    expect(bobCells[4]).toHaveTextContent(/active/i);
 
-    // Check start/end/date cells
-    const getCells = (row) => within(row).getAllByRole('cell');
-    const [row0, row1, row2] = rows.map(getCells);
-
-    // Row 0 (Bob)
-    expect(row0[3]).toHaveTextContent('10:00');
-    expect(row0[4]).toHaveTextContent('13:00');
-    expect(row0[5]).toHaveTextContent('28/09/2025'); // Date Of Booking
-
-    // Row 1 (Alice)
-    expect(row1[3]).toHaveTextContent('09:00');
-    expect(row1[4]).toHaveTextContent('11:00');
-    expect(row1[5]).toHaveTextContent('28/09/2025'); // Date Of Booking
-
-    // Row 2 (Charlie)
-    expect(row2[3]).toHaveTextContent('08:00');
-    expect(row2[4]).toHaveTextContent('10:00');
-    expect(row2[5]).toHaveTextContent('28/09/2025'); // Date Of Booking
+    const charlieCells = within(rows[2]).getAllByRole('cell');
+    expect(charlieCells[4]).toHaveTextContent(/cancelled/i);
   });
 
-  // ✅ Test 2: API fails → fallback message
-  test('shows "No bookings found." when API fails', async () => {
-    const { bookingService } = require('../src/services/bookingService');
+  test('shows an error banner when API fails', async () => {
     bookingService.getAllBookings.mockRejectedValueOnce(new Error('API failure'));
+    renderWithRouter(<AdminPage />);
 
-    render(<AdminPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText(/No bookings found/i)).toBeInTheDocument();
-    });
+    const err = await screen.findByText(/Failed to fetch bookings\. Please try again later\./i);
+    expect(err).toBeInTheDocument();
   });
 
-  // ✅ Test 3: No data returned → fallback message
-  test('shows "No bookings found." when no data is returned', async () => {
-    const { bookingService } = require('../src/services/bookingService');
+  test('shows "No bookings found." when API succeeds with empty list', async () => {
     bookingService.getAllBookings.mockResolvedValueOnce({ bookings: [] });
+    renderWithRouter(<AdminPage />);
 
-    render(<AdminPage />);
-
-    const noBookingsMsg = await screen.findByText(/No bookings found/i);
-    expect(noBookingsMsg).toBeInTheDocument();
+    const msg = await screen.findByText(/No bookings found\./i);
+    expect(msg).toBeInTheDocument();
   });
 });
