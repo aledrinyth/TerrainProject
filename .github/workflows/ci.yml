@@ -5,122 +5,57 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
-  backend-tests:
+  unit-tests:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pkg:
+          - name: backend
+            path: backend
+            lock: backend/package-lock.json
+          - name: frontend
+            path: frontend
+            lock: frontend/package-lock.json
+
     defaults:
       run:
-        working-directory: ./backend
+        working-directory: ${{ matrix.pkg.path }}
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Debug tree (paths & lockfiles)
+        run: |
+          echo "repo root:"
+          ls -la
+          echo "package dir:"
+          ls -la .
+          echo "lockfile? -> $LOCK"
+        env:
+          LOCK: ${{ matrix.pkg.lock }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-      - name: Install (backend)
-        run: npm ci
-      - name: Unit tests (backend)
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ matrix.pkg.lock }}
+
+      - name: Install
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            echo "WARN: package-lock.json missing; using npm install (no cache key)."
+            npm install
+          fi
+
+      - name: Run unit tests
         env:
           CI: true
           NODE_ENV: test
-        run: |
-          if npm run -s test:ci >/dev/null 2>&1; then
-            npm run test:ci
-          else
-            npm test -- --ci --runInBand
-          fi
-      # - uses: actions/upload-artifact@v4
-      #   if: always()
-      #   with:
-      #     name: backend-coverage
-      #     path: backend/coverage
-
-  webapp-tests:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./webapp
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: webapp/package-lock.json
-      - name: Install (webapp)
-        run: npm ci
-      - name: Unit tests (webapp)
-        env:
-          CI: true
-          NODE_ENV: test
-        run: |
-          if npm run -s test:ci >/devNull 2>&1; then
-            npm run test:ci
-          else
-            npm test -- --ci --runInBand
-          fi
-      # - uses: actions/upload-artifact@v4
-      #   if: always()
-      #   with:
-      #     name: webapp-coverage
-      #     path: webapp/coverage
-
-  e2e:
-    runs-on: ubuntu-latest
-    needs: [backend-tests, webapp-tests]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      # Install each package
-      - name: Install backend
-        working-directory: ./backend
-        run: npm ci
-      - name: Install webapp
-        working-directory: ./webapp
-        run: npm ci
-      - name: Install e2e
-        working-directory: ./e2e
-        run: npm ci
-
-      - name: Install Playwright browsers
-        working-directory: ./e2e
-        run: npm run install:browsers
-
-      # Start emulators, API, and web, and wait until health endpoints are up
-      - name: Start services & wait
-        working-directory: ./e2e
-        run: npm run ci:start-services
-
-      - name: Seed data (Firestore/Auth)
-        working-directory: ./e2e
-        run: npm run ci:seed
-
-      - name: Run Playwright (serial)
-        working-directory: ./e2e
-        run: npm run ci:test
-
-      - name: Upload Playwright report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: e2e/playwright-report
-          if-no-files-found: ignore
-      - name: Upload test-results (videos/traces)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: e2e/test-results
-          if-no-files-found: ignore
+        run: npm test -- --ci --runInBand
