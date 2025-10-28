@@ -10,7 +10,7 @@ on:
     - cron: "0 14 * * *"   # daily at 00:00 AEST (~14:00 UTC)
   workflow_dispatch: {}
 
-# Cancel previous in-progress runs on same ref
+# Cancel previous runs on same ref
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -123,10 +123,10 @@ jobs:
       - name: Cache Firebase emulators
         uses: actions/cache@v4
         with:
-          path: ~/.cache/firebase/emulators
+          path: $HOME/.cache/firebase/emulators
           key: firebase-emulators-${{ runner.os }}-v1
 
-      # Start emulators + API + Web; wait for readiness (reuses e2e scripts)
+      # Start emulators + API + Web; wait for readiness (uses your e2e scripts)
       - name: Start services (emulators + api + web) and wait
         working-directory: terrainapp/e2e
         env:
@@ -135,18 +135,17 @@ jobs:
           FIRESTORE_EMULATOR_HOST: ${{ env.FIRESTORE_EMULATOR_HOST }}
           VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
         run: |
-          # Run all three in background with names and wait until ready
           npx concurrently -k -n EMU,API,WEB "npm:dev:emu" "npm:dev:api" "npm:dev:web" & echo $! > /tmp/pid-services
-          # Block until emulators, API and web are ready
           npm run wait:all
 
-      - name: Seed Firestore + Auth (optional)
+      - name: Seed Firestore + Auth
         working-directory: terrainapp/e2e
         run: npm run seed:all
 
-      - name: Run Playwright E2E tests (single worker, headless)
+      # IMPORTANT: use the CI-specific Playwright config to avoid webServer conflicts
+      - name: Run Playwright E2E (single worker, headless)
         working-directory: terrainapp/e2e
-        run: npx playwright test --workers=1
+        run: npx playwright test --config=playwright.ci.config.js --workers=1
 
       - name: Upload Playwright report (on failure)
         if: failure()
@@ -154,6 +153,17 @@ jobs:
         with:
           name: playwright-report
           path: terrainapp/e2e/playwright-report
+          if-no-files-found: ignore
+
+      - name: Upload service logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: service-logs
+          path: |
+            terrainapp/e2e/emulators.log
+            terrainapp/e2e/api.log
+            terrainapp/e2e/web.log
           if-no-files-found: ignore
 
       - name: Cleanup background services
@@ -207,14 +217,14 @@ jobs:
       - working-directory: terrainapp/e2e
         run: npm ci
 
-      - name: Install Playwright browsers (for any LH audits that need it)
+      - name: Install Playwright browsers
         working-directory: terrainapp/e2e
         run: npm run install:browsers
 
       - name: Cache Firebase emulators
         uses: actions/cache@v4
         with:
-          path: ~/.cache/firebase/emulators
+          path: $HOME/.cache/firebase/emulators
           key: firebase-emulators-${{ runner.os }}-v1
 
       # Start services (same as E2E) and wait
@@ -229,11 +239,11 @@ jobs:
           npx concurrently -k -n EMU,API,WEB "npm:dev:emu" "npm:dev:api" "npm:dev:web" & echo $! > /tmp/pid-services
           npm run wait:all
 
-      - name: Seed Firestore + Auth (optional)
+      - name: Seed Firestore + Auth
         working-directory: terrainapp/e2e
         run: npm run seed:all
 
-      # --- Lighthouse CI (uses terrainapp/e2e/.lighthouserc.json) ---
+      # --- Lighthouse CI (expects terrainapp/e2e/.lighthouserc.json) ---
       - name: Run Lighthouse CI
         working-directory: terrainapp/e2e
         run: npx lhci autorun
@@ -245,7 +255,7 @@ jobs:
           path: terrainapp/e2e/lhci-report
           if-no-files-found: ignore
 
-      # --- k6 smoke test for API ---
+      # --- k6 smoke test for API (expects terrainapp/e2e/k6-smoke.js) ---
       - name: Run k6 smoke
         uses: grafana/k6-action@v0.3.1
         with:
