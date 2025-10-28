@@ -42,7 +42,7 @@
 
     "//---------------- CI convenience ----------------": "",
     "ci:prepare": "npm ci && npm run install:browsers",
-    "ci:start-services": "concurrently -k -n EMU,API,WEB,WAIT \"npm:dev:emu\" \"npm:dev:api\" \"npm:dev:web\" \"npm:wait:all\"",
+    "ci:start-services": "concurrently -k -n EMU,API,WEB,WAIT \"npm:dev:emu\" \"npm:dev:api\" \"npm:dev:web\"",
     "ci:seed": "npm run seed:all",
     "ci:test": "playwright test --workers=1"
   },
