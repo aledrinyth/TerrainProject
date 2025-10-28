@@ -231,6 +231,7 @@ jobs:
         working-directory: terrainapp/e2e
         env:
           CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+          LHCI_CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
           CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
           GOOGLE_CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: |
@@ -270,3 +271,4 @@ jobs:
           if [ -f /tmp/pid-services ]; then
             kill -TERM "$(cat /tmp/pid-services)" || true
             sleep 3
+          fi
