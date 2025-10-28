@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: ["**"]
   schedule:
-    - cron: "0 14 * * *"   # daily at ~00:00 AEST
+    - cron: "0 14 * * *"   # daily at ~00:00 AEST (14:00 UTC)
   workflow_dispatch: {}
 
 concurrency:
@@ -98,25 +98,26 @@ jobs:
           path: $HOME/.cache/firebase/emulators
           key: firebase-emulators-${{ runner.os }}-v1
 
+      # Start emulators + API + Web (dev) and wait 
       - name: Start services (emulators + api + web) and wait
+        working-directory: terrainapp/e2e
         env:
           NODE_ENV: development
           GCP_PROJECT: ${{ env.GCP_PROJECT }}
           FIRESTORE_EMULATOR_HOST: ${{ env.FIRESTORE_EMULATOR_HOST }}
           VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
         run: |
-          cd terrainapp/e2e
           npx concurrently -k -n EMU,API,WEB "npm:dev:emu" "npm:dev:api" "npm:dev:web" & echo $! > /tmp/pid-services
           npm run wait:all
 
       - name: Seed Firestore + Auth
+        working-directory: terrainapp/e2e
         run: npm run seed:all
-        working-directory: terrainapp/e2e
 
-      # IMPORTANT: CI config disables Playwright.webServer to avoid port conflicts
+      # IMPORTANT: use CI config with webServer disabled to avoid port conflicts
       - name: Run Playwright E2E
-        run: npx playwright test --config=playwright.ci.config.js --workers=1
         working-directory: terrainapp/e2e
+        run: npx playwright test --config=playwright.ci.config.js --workers=1
 
       - name: Upload Playwright report (on failure)
         if: failure()
@@ -124,17 +125,6 @@ jobs:
         with:
           name: playwright-report
           path: terrainapp/e2e/playwright-report
-          if-no-files-found: ignore
-
-      - name: Upload service logs (on failure)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: service-logs
-          path: |
-            terrainapp/e2e/emulators.log
-            terrainapp/e2e/api.log
-            terrainapp/e2e/web.log
           if-no-files-found: ignore
 
       - name: Cleanup background services
@@ -149,9 +139,8 @@ jobs:
   perf:
     name: Performance (Lighthouse + k6)
     runs-on: ubuntu-latest
-    needs: [e2e]     # run after e2e
+    needs: [e2e]   # only run if E2E passed
     timeout-minutes: 30
-    # continue-on-error: true   
     env:
       GCP_PROJECT: demo-terrain
       FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -196,25 +185,53 @@ jobs:
           path: $HOME/.cache/firebase/emulators
           key: firebase-emulators-${{ runner.os }}-v1
 
-      - name: Start services (emulators + api + web) and wait
+      # Start emulators
+      - name: Start Firebase emulators (Auth + Firestore)
+        working-directory: terrainapp/e2e
+        run: |
+          npx firebase emulators:start --only auth,firestore --project "$GCP_PROJECT" > emulators.log 2>&1 &
+          echo $! > /tmp/pid_emu
+
+      - name: Wait for emulators
+        run: npx wait-on tcp:8080 tcp:9099
+        working-directory: terrainapp/e2e
+
+      # Start backend in "production" mode for perf
+      - name: Start backend API (port 6969)
+        working-directory: terrainapp/backend
         env:
-          NODE_ENV: development
+          NODE_ENV: production
           GCP_PROJECT: ${{ env.GCP_PROJECT }}
           FIRESTORE_EMULATOR_HOST: ${{ env.FIRESTORE_EMULATOR_HOST }}
+        run: |
+          nohup node server.js > ../../api.log 2>&1 &
+          echo $! > /tmp/pid_api
+
+      # Build + preview webapp (PROD build for realistic Lighthouse)
+      - name: Build webapp
+        working-directory: terrainapp/webapp
+        run: npm run build
+
+      - name: Start webapp preview (static, port 5173)
+        working-directory: terrainapp/webapp
+        env:
           VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
         run: |
-          cd terrainapp/e2e
-          npx concurrently -k -n EMU,API,WEB "npm:dev:emu" "npm:dev:api" "npm:dev:web" & echo $! > /tmp/pid-services
-          npm run wait:all
+          nohup npm run preview -- --host 0.0.0.0 --port 5173 > ../../web-preview.log 2>&1 &
+          echo $! > /tmp/pid_web_preview
+
+      - name: Wait for API + Web preview
+        run: npx wait-on http://localhost:6969/api/health http://localhost:5173/login
+        working-directory: terrainapp/e2e
 
       - name: Seed Firestore + Auth
-        run: npm run seed:all
         working-directory: terrainapp/e2e
+        run: npm run seed:all
 
       # Lighthouse CI (expects terrainapp/e2e/.lighthouserc.json)
       - name: Run Lighthouse CI
-        run: npx lhci autorun
         working-directory: terrainapp/e2e
+        run: npx lhci autorun
 
       - name: Upload Lighthouse report
         uses: actions/upload-artifact@v4
@@ -231,10 +248,10 @@ jobs:
         env:
           API_BASE: http://localhost:6969/api
 
-      - name: Cleanup background services
+      - name: Cleanup services
         if: always()
         run: |
-          if [ -f /tmp/pid-services ]; then
-            kill -TERM "$(cat /tmp/pid-services)" || true
-            sleep 3
-          fi
+          for f in /tmp/pid_emu /tmp/pid_api /tmp/pid_web_preview; do
+            if [ -f "$f" ]; then kill -TERM "$(cat "$f")" || true; fi
+          done
+          sleep 2
