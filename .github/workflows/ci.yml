@@ -2,11 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [ "**" ]
+    branches: ["**"]
   pull_request:
-    branches: [ "**" ]
+    branches: ["**"]
 
-# Cancel previous runs on the same branch/PR
+# Cancel previous runs on same ref
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -67,15 +67,16 @@ jobs:
     needs: [backend-unit, webapp-unit]   # run after unit tests
     timeout-minutes: 30
     env:
-      # common env used by your scripts
+      # Common env used by your scripts
       GCP_PROJECT: demo-terrain
-      FIRESTORE_EMULATOR_HOST: localhost:8080
+      FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+      NODE_ENV: development
       VITE_API_BASE_URL: http://localhost:6969/api
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Install backend deps (server will run from here)
+      # --- Install backend deps ---
       - name: Setup Node (backend) with cache
         uses: actions/setup-node@v4
         with:
@@ -86,7 +87,7 @@ jobs:
         working-directory: terrainapp/backend
         run: npm ci
 
-      # Install webapp deps (Vite dev server will run from here)
+      # --- Install webapp deps ---
       - name: Setup Node (webapp) with cache
         uses: actions/setup-node@v4
         with:
@@ -97,7 +98,7 @@ jobs:
         working-directory: terrainapp/webapp
         run: npm ci
 
-      # Install e2e deps (Playwright + Firebase CLI + wait-on, etc.)
+      # --- Install e2e deps ---
       - name: Setup Node (e2e) with cache
         uses: actions/setup-node@v4
         with:
@@ -110,69 +111,80 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: terrainapp/e2e
-        run: npm run install:browsers
+        run: npx playwright install --with-deps chromium
 
-      # Start services in background (keep them alive while tests run)
+      # --- Start services in background ---
       - name: Start Firebase emulators (Auth + Firestore)
         working-directory: terrainapp/e2e
         run: |
           npx firebase emulators:start --only auth,firestore --project "$GCP_PROJECT" > emulators.log 2>&1 &
-          echo $! > /tmp/pid-emulators
+          echo $! > /tmp/pid_emu
 
       - name: Wait for emulators
-        working-directory: terrainapp/e2e
         run: npx wait-on tcp:8080 tcp:9099
 
       - name: Start backend API (port 6969)
-        working-directory: terrainapp/e2e
+        working-directory: terrainapp/backend
         env:
-          NODE_ENV: development
+          NODE_ENV: ${{ env.NODE_ENV }}
           GCP_PROJECT: ${{ env.GCP_PROJECT }}
           FIRESTORE_EMULATOR_HOST: ${{ env.FIRESTORE_EMULATOR_HOST }}
         run: |
-          node ../backend/server.js > api.log 2>&1 &
-          echo $! > /tmp/pid-api
+          nohup node server.js > ../../api.log 2>&1 &
+          echo $! > /tmp/pid_api
+
+      - name: Wait for backend health
+        run: npx wait-on http://localhost:6969/api/health
 
       - name: Start webapp (Vite dev server on 5173)
-        working-directory: terrainapp/e2e
+        working-directory: terrainapp/webapp
         env:
           VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
         run: |
-          npm run dev --prefix ../webapp -- --host 0.0.0.0 --port 5173 > web.log 2>&1 &
-          echo $! > /tmp/pid-web
+          nohup npm run dev -- --host 0.0.0.0 --port 5173 > ../../web.log 2>&1 &
+          echo $! > /tmp/pid_web
 
-      - name: Wait for API + Web to be ready
-        working-directory: terrainapp/e2e
-        run: npx wait-on http://localhost:6969/api/health http://localhost:5173/login
+      - name: Wait for webapp
+        run: npx wait-on http://localhost:5173/login
 
-      - name: Seed Firestore + Auth
+      # (Optional) Seed data if your repo has these scripts
+      - name: Seed Firestore + Auth (optional)
+        if: ${{ hashFiles('terrainapp/e2e/seed-firestore.js') != '' }}
         working-directory: terrainapp/e2e
         run: |
           node ./seed-firestore.js
-          # If you have auth seeding:
           if [ -f ./seed-auth.js ]; then node ./seed-auth.js; fi
 
-      - name: Run Playwright E2E tests (single worker, headed-off)
+      # --- Run Playwright with CI-only config (no webServer block) ---
+      - name: Run Playwright E2E (single worker)
         working-directory: terrainapp/e2e
-        run: npx playwright test --workers=1
+        run: npx playwright test --config=playwright.ci.config.js --workers=1
 
-      # Upload Playwright HTML report if something fails
-      - name: Upload Playwright report (artifact)
-        if: failure()
+      # --- Artifacts & logs on failure ---
+      - name: Upload Playwright report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: terrainapp/e2e/playwright-report
           if-no-files-found: ignore
 
-      # Always stop background processes so the job exits cleanly
+      - name: Upload logs (emulators/api/web)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: service-logs
+          path: |
+            terrainapp/e2e/emulators.log
+            api.log
+            web.log
+          if-no-files-found: ignore
+
+      # --- Teardown ---
       - name: Cleanup background services
         if: always()
         run: |
-          for pidfile in /tmp/pid-emulators /tmp/pid-api /tmp/pid-web; do
-            if [ -f "$pidfile" ]; then
-              kill -TERM "$(cat "$pidfile")" || true
-            fi
+          for f in /tmp/pid_emu /tmp/pid_api /tmp/pid_web; do
+            if [ -f "$f" ]; then kill -TERM "$(cat "$f")" || true; fi
           done
-          # Give them a moment to exit
-          sleep 3
+          sleep 2
