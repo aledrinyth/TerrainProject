@@ -4,10 +4,10 @@ import base from './playwright.config.js';
 
 export default defineConfig({
   ...base,
-  // CI will start servers itself; prevent Playwright from trying to manage ports.
+  // CI will start servers itself, prevent Playwright from trying to manage ports.
   webServer: undefined,
 
-  // Force single worker in CI (your base already does this via env, but keep it explicit here)
+  // Force single worker in CI 
   workers: 1,
 
   // Keep your existing defaults

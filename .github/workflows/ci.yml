@@ -147,7 +147,7 @@ jobs:
       - name: Wait for webapp
         run: npx wait-on http://localhost:5173/login
 
-      # (Optional) Seed data if your repo has these scripts
+      # Seed data
       - name: Seed Firestore + Auth (optional)
         if: ${{ hashFiles('terrainapp/e2e/seed-firestore.js') != '' }}
         working-directory: terrainapp/e2e
