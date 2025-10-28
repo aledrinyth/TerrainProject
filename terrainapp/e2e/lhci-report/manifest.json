@@ -1,0 +1,74 @@
+[
+  {
+    "url": "http://localhost:5173/login",
+    "isRepresentativeRun": false,
+    "htmlPath": "C:\\Users\\ariff\\OneDrive\\Documents\\TerrainProject-3\\terrainapp\\e2e\\lhci-report\\localhost-login-2025_10_28_14_40_50.report.html",
+    "jsonPath": "C:\\Users\\ariff\\OneDrive\\Documents\\TerrainProject-3\\terrainapp\\e2e\\lhci-report\\localhost-login-2025_10_28_14_40_50.report.json",
+    "summary": {
+      "performance": 0.51,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.83
+    }
+  },
+  {
+    "url": "http://localhost:5173/login",
+    "isRepresentativeRun": false,
+    "htmlPath": "C:\\Users\\ariff\\OneDrive\\Documents\\TerrainProject-3\\terrainapp\\e2e\\lhci-report\\localhost-login-2025_10_28_14_41_07.report.html",
+    "jsonPath": "C:\\Users\\ariff\\OneDrive\\Documents\\TerrainProject-3\\terrainapp\\e2e\\lhci-report\\localhost-login-2025_10_28_14_41_07.report.json",
+    "summary": {
+      "performance": 0.53,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.83
+    }
+  },
+  {
+    "url": "http://localhost:5173/booking",
+    "isRepresentativeRun": false,
+    "htmlPath": "C:\\Users\\ariff\\OneDrive\\Documents\\TerrainProject-3\\terrainapp\\e2e\\lhci-report\\localhost-booking-2025_10_28_14_41_39.report.html",
+    "jsonPath": "C:\\Users\\ariff\\OneDrive\\Documents\\TerrainProject-3\\terrainapp\\e2e\\lhci-report\\localhost-booking-2025_10_28_14_41_39.report.json",
+    "summary": {
+      "performance": 0.56,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.83
+    }
+  },
+  {
+    "url": "http://localhost:5173/booking",
+    "isRepresentativeRun": false,
+    "htmlPath": "C:\\Users\\ariff\\OneDrive\\Documents\\TerrainProject-3\\terrainapp\\e2e\\lhci-report\\localhost-booking-2025_10_28_14_42_13.report.html",
+    "jsonPath": "C:\\Users\\ariff\\OneDrive\\Documents\\TerrainProject-3\\terrainapp\\e2e\\lhci-report\\localhost-booking-2025_10_28_14_42_13.report.json",
+    "summary": {
+      "performance": 0.46,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.83
+    }
+  },
+  {
+    "url": "http://localhost:5173/login",
+    "isRepresentativeRun": true,
+    "htmlPath": "C:\\Users\\ariff\\OneDrive\\Documents\\TerrainProject-3\\terrainapp\\e2e\\lhci-report\\localhost-login-2025_10_28_14_41_23.report.html",
+    "jsonPath": "C:\\Users\\ariff\\OneDrive\\Documents\\TerrainProject-3\\terrainapp\\e2e\\lhci-report\\localhost-login-2025_10_28_14_41_23.report.json",
+    "summary": {
+      "performance": 0.53,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.83
+    }
+  },
+  {
+    "url": "http://localhost:5173/booking",
+    "isRepresentativeRun": true,
+    "htmlPath": "C:\\Users\\ariff\\OneDrive\\Documents\\TerrainProject-3\\terrainapp\\e2e\\lhci-report\\localhost-booking-2025_10_28_14_41_54.report.html",
+    "jsonPath": "C:\\Users\\ariff\\OneDrive\\Documents\\TerrainProject-3\\terrainapp\\e2e\\lhci-report\\localhost-booking-2025_10_28_14_41_54.report.json",
+    "summary": {
+      "performance": 0.52,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.83
+    }
+  }
+]

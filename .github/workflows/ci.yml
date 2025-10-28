@@ -145,16 +145,20 @@ jobs:
             sleep 3
           fi
 
-  # -------------------- Performance (LHCI + k6 on host) -------
+  # -------------------- Performance (LHCI + Playwright smoke)
   perf:
-    name: Performance (Lighthouse + k6)
+    name: Performance (LHCI + API Smoke)
     runs-on: ubuntu-latest
-    needs: [e2e]     # always run after e2e (no conditional)
+    needs: [e2e]     # always run after e2e
     timeout-minutes: 30
     env:
       GCP_PROJECT: demo-terrain
       FIRESTORE_EMULATOR_HOST: localhost:8080
       VITE_API_BASE_URL: http://localhost:6969/api
+      # API smoke env (Option B)
+      API_BASE: http://localhost:6969/api
+      SMOKE_RUNS: 10
+      SMOKE_MAX_MS: 300
     steps:
       - uses: actions/checkout@v4
 
@@ -176,7 +180,7 @@ jobs:
       - run: npm ci
         working-directory: terrainapp/webapp
 
-      # E2E deps (LHCI + wait-on live here)
+      # E2E deps (LHCI + wait-on etc.)
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -185,7 +189,7 @@ jobs:
       - run: npm ci
         working-directory: terrainapp/e2e
 
-      - name: Install Playwright browsers (for LH audits that need it)
+      - name: Install Playwright browsers (for LH audits if needed)
         run: npm run install:browsers
         working-directory: terrainapp/e2e
 
@@ -222,14 +226,13 @@ jobs:
           path: terrainapp/e2e/lhci-report
           if-no-files-found: ignore
 
-      # k6 on the host (no container) so localhost works
-      - name: Setup k6
-        uses: grafana/setup-k6-action@v1
-
-      - name: Run k6 smoke
-        run: k6 run terrainapp/e2e/k6-smoke.js
+      # Playwright API smoke
+      - name: Run API smoke (Playwright)
+        run: npx playwright test terrainapp/e2e/api-smoke.spec.js --workers=5
         env:
-          API_BASE: http://localhost:6969/api
+          API_BASE: ${{ env.API_BASE }}
+          SMOKE_RUNS: ${{ env.SMOKE_RUNS }}
+          SMOKE_MAX_MS: ${{ env.SMOKE_MAX_MS }}
 
       - name: Upload perf service logs (on failure)
         if: failure()

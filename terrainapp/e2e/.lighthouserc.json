@@ -8,8 +8,10 @@
       ],
       "settings": {
         "formFactor": "mobile",
-        "screenEmulation": { "mobile": true, "disabled": false }
-      }
+        "screenEmulation": { "mobile": true, "disabled": false },
+        "chromeFlags": ["--headless=new", "--no-sandbox"]
+      },
+      "chromePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
     },
     "assert": {
       "assertions": {
