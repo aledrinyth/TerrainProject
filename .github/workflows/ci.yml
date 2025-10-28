@@ -249,7 +249,7 @@ jobs:
       # Playwright API smoke
       - name: Run API smoke (Playwright)
         working-directory: terrainapp/e2e
-        run: npx playwright test terrainapp/e2e/api-smoke.spec.js --config=playwright.ci.config.js --workers=5
+        run: npx playwright test tests/api-smoke.spec.js --config=playwright.ci.config.js --workers=5
         env:
           API_BASE: ${{ env.API_BASE }}
           SMOKE_RUNS: ${{ env.SMOKE_RUNS }}
