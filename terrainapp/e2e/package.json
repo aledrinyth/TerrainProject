@@ -18,7 +18,6 @@
     "seed": "node ./seed-firestore.js",
     "seed:auth": "node ./seed-auth.js",
     "seed:all": "npm run seed && npm run seed:auth || true",
-
     "//---------------- Playwright runners ----------------": "",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
@@ -33,20 +32,21 @@
     "test:my-bookings": "playwright test tests/my-bookings.spec.js",
     "test:protected": "playwright test tests/protected-routes.spec.js",
     "report": "playwright show-report",
-
     "//---------------- One-liners ----------------": "",
     "e2e": "playwright test --workers=1",
     "e2e:headed": "playwright test --workers=1 --headed",
     "e2e:once": "npm run wait:all && npm run seed:all && npm run e2e",
     "e2e:headed:once": "npm run wait:all && npm run seed:all && npm run e2e:headed",
-
     "//---------------- CI convenience ----------------": "",
     "ci:prepare": "npm ci && npm run install:browsers",
     "ci:start-services": "concurrently -k -n EMU,API,WEB,WAIT \"npm:dev:emu\" \"npm:dev:api\" \"npm:dev:web\"",
     "ci:seed": "npm run seed:all",
-    "ci:test": "playwright test --workers=1"
+    "ci:test": "playwright test --workers=1",
+    "//---------------- Performance ----------------": "",
+    "perf:web": "lhci autorun"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.56.1",
     "concurrently": "^9.0.1",
     "cross-env": "^7.0.3",
