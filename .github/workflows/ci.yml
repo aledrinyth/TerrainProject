@@ -155,7 +155,7 @@ jobs:
       GCP_PROJECT: demo-terrain
       FIRESTORE_EMULATOR_HOST: localhost:8080
       VITE_API_BASE_URL: http://localhost:6969/api
-      # API smoke env (Option B)
+      # API smoke env 
       API_BASE: http://localhost:6969/api
       SMOKE_RUNS: 10
       SMOKE_MAX_MS: 300
@@ -249,7 +249,7 @@ jobs:
       # Playwright API smoke
       - name: Run API smoke (Playwright)
         working-directory: terrainapp/e2e
-        run: npx playwright test terrainapp/e2e/api-smoke.spec.js --workers=5
+        run: npx playwright test terrainapp/e2e/api-smoke.spec.js --config=playwright.ci.config.js --workers=5
         env:
           API_BASE: ${{ env.API_BASE }}
           SMOKE_RUNS: ${{ env.SMOKE_RUNS }}
