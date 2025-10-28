@@ -45,7 +45,7 @@ test.describe('API smoke', () => {
     }
 
     if (!chosen) {
-      // Nothing public was found; show what we got and fail clearly.
+      // Nothing public was found and show what we got and fail clearly.
       console.error('No public 200 endpoint found. Probed:', statuses);
       expect.soft(Object.values(statuses).some(s => s === 200)).toBeTruthy();
       test.skip('Skipping latency check because no public 200 endpoint was found');
