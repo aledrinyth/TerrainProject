@@ -1,0 +1,6 @@
+# terrainapp/e2e/.gitignore
+
+node_modules/
+test-results/
+playwright-report/
+playwright/.cache/

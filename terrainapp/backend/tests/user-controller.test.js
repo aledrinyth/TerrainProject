@@ -1,74 +1,86 @@
+// tests/user-controller.test.js
+
 // --- MOCK SETUP (must appear first) ---
 
-// Mock pino (used in logger.js)
-jest.mock('pino', () => () => ({
-  info: jest.fn(),
-  error: jest.fn(),
-  warn: jest.fn(),
-  debug: jest.fn(),
-}));
+// Mock express so controllers that `require("express")` don't need the package installed
+jest.mock('express', function () { return {}; }, { virtual: true });
+
+// Mock pino (used in logger.js) — mark as virtual so the package isn't required
+jest.mock(
+  'pino',
+  function () {
+    return function () {
+      return {
+        info: jest.fn(),
+        error: jest.fn(),
+        warn: jest.fn(),
+        debug: jest.fn(),
+      };
+    };
+  },
+  { virtual: true }
+);
 
 // Mock logger.js
-jest.mock('../logger.js', () => ({
-  info: jest.fn(),
-  error: jest.fn(),
-  warn: jest.fn(),
-  debug: jest.fn(),
-}));
-
-// Mock firebase-admin for config/firebase.js
-jest.mock('firebase-admin', () => ({
-  initializeApp: jest.fn(),
-  firestore: () => ({
-    collection: jest.fn(),
-  }),
-  auth: jest.fn(() => ({})),
-}));
+jest.mock('../logger.js', function () {
+  return {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  };
+});
 
 // Create a reusable mockAuth object that simulates Firebase Auth methods
-const mockVerifyIdToken = jest.fn();
-const mockCreateUser = jest.fn();
-const mockGetUserByEmail = jest.fn();
-const mockGetUserById = jest.fn();
-const mockGetUserByPhoneNumber = jest.fn();
-const mockListUsers = jest.fn();
-const mockUpdateUser = jest.fn();
-const mockDeleteUser = jest.fn();
+var mockVerifyIdToken = jest.fn();
+var mockCreateUser = jest.fn();
+var mockGetUserByEmail = jest.fn();
+var mockGetUserById = jest.fn();
+var mockGetUserByPhoneNumber = jest.fn();
+var mockListUsers = jest.fn();
+var mockUpdateUser = jest.fn();
+var mockDeleteUser = jest.fn();
 
-// Mock ../config/firebase.js to return our mockAuth
-jest.mock('../config/firebase.js', () => ({
-  getAuth: jest.fn(() => ({
-    verifyIdToken: mockVerifyIdToken,
-    createUser: mockCreateUser,
-    getUserByEmail: mockGetUserByEmail,
-    getUserById: mockGetUserById,
-    getUserByPhoneNumber: mockGetUserByPhoneNumber,
-    listUsers: mockListUsers,
-    updateUser: mockUpdateUser,
-    deleteUser: mockDeleteUser,
-  })),
-  db: { collection: jest.fn() },
-  adminAuth: { setCustomUserClaims: jest.fn(), getUserByEmail: jest.fn() },
-}));
+// Mock ../config/firebase.js to return our mockAuth and adminAuth
+jest.mock('../config/firebase.js', function () {
+  return {
+    getAuth: jest.fn(function () {
+      return {
+        verifyIdToken: mockVerifyIdToken,
+        createUser: mockCreateUser,
+        getUserByEmail: mockGetUserByEmail,
+        getUserById: mockGetUserById,
+        getUserByPhoneNumber: mockGetUserByPhoneNumber,
+        listUsers: mockListUsers,
+        updateUser: mockUpdateUser,
+        deleteUser: mockDeleteUser,
+      };
+    }),
+    db: { collection: jest.fn() },
+    adminAuth: { setCustomUserClaims: jest.fn(), getUserByEmail: jest.fn() },
+  };
+});
 
-// --- ✅ IMPORT AFTER MOCKS ---
-const {
-  createUser,
-  getUserByEmail,
-  getUserById,
-  getUserByPhoneNumber,
-  getAllUsers,
-  updateUser,
-  deleteUser,
-  setAdmin,
-} = require('../controllers/user-controller');
-const { getAuth, adminAuth } = require('../config/firebase');
-const logger = require('../logger');
+// --- IMPORT AFTER MOCKS ---
+var controllers = require('../controllers/user-controller');
+var createUser = controllers.createUser;
+var getUserByEmail = controllers.getUserByEmail;
+var getUserById = controllers.getUserById;
+var getUserByPhoneNumber = controllers.getUserByPhoneNumber;
+var getAllUsers = controllers.getAllUsers;
+var updateUser = controllers.updateUser;
+var deleteUser = controllers.deleteUser;
+var setAdmin = controllers.setAdmin;
 
-describe('User Controller', () => {
-  let req, res;
+var firebaseCfg = require('../config/firebase');
+var getAuth = firebaseCfg.getAuth;
+var adminAuth = firebaseCfg.adminAuth;
+var logger = require('../logger');
 
-  beforeEach(() => {
+describe('User Controller', function () {
+  var req, res;
+
+  beforeEach(function () {
     jest.clearAllMocks();
     req = {
       body: {},
@@ -76,13 +88,13 @@ describe('User Controller', () => {
       headers: {},
     };
     res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis(),
+      status: jest.fn(function () { return this; }),
+      json: jest.fn(function () { return this; }),
     };
   });
 
-  // --- ✅ createUser ---
-  test('createUser → returns 400 if required fields missing', async () => {
+  // --- createUser ---
+  test('createUser returns 400 if required fields missing', async function () {
     req.body = { name: 'John' }; // Missing email and phoneNumber
 
     await createUser(req, res);
@@ -92,7 +104,7 @@ describe('User Controller', () => {
     });
   });
 
-  test('createUser → returns 401 if no token', async () => {
+  test('createUser returns 401 if no token', async function () {
     req.body = { name: 'John', email: 'john@example.com', phoneNumber: '12345' };
     req.headers.authorization = undefined;
 
@@ -103,7 +115,7 @@ describe('User Controller', () => {
     });
   });
 
-  test('createUser → returns 403 if not admin', async () => {
+  test('createUser returns 403 if not admin', async function () {
     req.body = { name: 'John', email: 'john@example.com', phoneNumber: '12345' };
     req.headers.authorization = 'Bearer token123';
     mockVerifyIdToken.mockResolvedValue({ admin: false });
@@ -115,7 +127,7 @@ describe('User Controller', () => {
     });
   });
 
-  test('createUser → creates user successfully', async () => {
+  test('createUser creates user successfully', async function () {
     req.body = { name: 'John', email: 'john@example.com', phoneNumber: '12345' };
     req.headers.authorization = 'Bearer token123';
     mockVerifyIdToken.mockResolvedValue({ admin: true });
@@ -137,8 +149,8 @@ describe('User Controller', () => {
     });
   });
 
-  // --- ✅ getUserByEmail ---
-  test('getUserByEmail → returns 403 if not admin', async () => {
+  // --- getUserByEmail ---
+  test('getUserByEmail returns 403 if not admin', async function () {
     req.params = { email: 'john@example.com' };
     req.headers.authorization = 'Bearer token123';
     mockVerifyIdToken.mockResolvedValue({ admin: false });
@@ -150,7 +162,7 @@ describe('User Controller', () => {
     });
   });
 
-  test('getUserByEmail → returns user when found', async () => {
+  test('getUserByEmail returns user when found', async function () {
     req.params = { email: 'john@example.com' };
     req.headers.authorization = 'Bearer token123';
     mockVerifyIdToken.mockResolvedValue({ admin: true });
@@ -169,8 +181,8 @@ describe('User Controller', () => {
     });
   });
 
-  // --- ✅ getAllUsers ---
-  test('getAllUsers → returns 403 if not admin', async () => {
+  // --- getAllUsers ---
+  test('getAllUsers returns 403 if not admin', async function () {
     req.headers.authorization = 'Bearer token123';
     mockVerifyIdToken.mockResolvedValue({ admin: false });
 
@@ -181,7 +193,7 @@ describe('User Controller', () => {
     });
   });
 
-  test('getAllUsers → returns all users successfully', async () => {
+  test('getAllUsers returns all users successfully', async function () {
     req.headers.authorization = 'Bearer token123';
     mockVerifyIdToken.mockResolvedValue({ admin: true });
     mockListUsers.mockResolvedValue({
@@ -202,8 +214,8 @@ describe('User Controller', () => {
     });
   });
 
-  // --- ✅ deleteUser ---
-  test('deleteUser → returns 403 if not admin', async () => {
+  // --- deleteUser ---
+  test('deleteUser returns 403 if not admin', async function () {
     req.params = { email: 'john@example.com' };
     req.headers.authorization = 'Bearer token123';
     mockVerifyIdToken.mockResolvedValue({ admin: false });
@@ -215,7 +227,7 @@ describe('User Controller', () => {
     });
   });
 
-  test('deleteUser → deletes user successfully', async () => {
+  test('deleteUser deletes user successfully', async function () {
     req.params = { email: 'john@example.com' };
     req.headers.authorization = 'Bearer token123';
     mockVerifyIdToken.mockResolvedValue({ admin: true });
@@ -229,9 +241,9 @@ describe('User Controller', () => {
     });
   });
 
-  // --- ✅ setAdmin ---
-  test('setAdmin → returns 400 if no email', async () => {
-    req.params = {}; // FIXED
+  // --- setAdmin ---
+  test('setAdmin returns 400 if no email', async function () {
+    req.params = {}; // missing email
     await setAdmin(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
@@ -239,8 +251,8 @@ describe('User Controller', () => {
     });
   });
 
-  test('setAdmin → promotes user successfully', async () => {
-    req.params = { email: 'john@example.com' }; // FIXED
+  test('setAdmin promotes user successfully', async function () {
+    req.params = { email: 'john@example.com' };
     adminAuth.getUserByEmail.mockResolvedValue({ uid: 'uid123' });
     adminAuth.setCustomUserClaims.mockResolvedValue();
 

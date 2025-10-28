@@ -1,12 +1,20 @@
-// Mock pino dependency (used by logger.js)
-jest.mock('pino', () => () => ({
+// tests/booking-controller.test.js
+
+// 0) Mock packages that may not be installed in test env
+jest.mock('express', () => ({}), { virtual: true });
+jest.mock('ics', () => ({
+  createEvent: jest.fn(() => ({ error: null, value: 'BEGIN:VCALENDAR\nEND:VCALENDAR' })),
+}), { virtual: true });
+
+// 1) Mock pino (logger.js depends on it). Virtual so it needn't be installed.
+jest.mock('pino', () => jest.fn(() => ({
   info: jest.fn(),
   error: jest.fn(),
   warn: jest.fn(),
   debug: jest.fn(),
-}));
+})), { virtual: true });
 
-// Mock logger.js to avoid circular mock issues
+// 2) Mock our logger wrapper to avoid circular deps / side effects
 jest.mock('../logger.js', () => ({
   info: jest.fn(),
   error: jest.fn(),
@@ -14,31 +22,19 @@ jest.mock('../logger.js', () => ({
   debug: jest.fn(),
 }));
 
-// Mock firebase-admin (for firebase.js)
+// 3) Mock firebase-admin/auth exactly as the controller imports it
 const mockVerifyIdToken = jest.fn();
-jest.mock('firebase-admin', () => ({
-  initializeApp: jest.fn(),
-  firestore: () => ({
-    collection: jest.fn(() => ({
-      where: jest.fn().mockReturnThis(),
-      get: jest.fn(),
-      add: jest.fn(),
-      doc: jest.fn().mockReturnThis(),
-      update: jest.fn(),
-    })),
-  }),
-  auth: () => ({
-    verifyIdToken: mockVerifyIdToken,
-  }),
-}));
+jest.mock('firebase-admin/auth', () => ({
+  getAuth: () => ({ verifyIdToken: mockVerifyIdToken }),
+}), { virtual: true });
 
-// Mock firebase.js config wrapper
+// 4) Mock Firestore config with the EXACT id used by the controller
+// We'll override db.collection() per-test to simulate queries.
 jest.mock('../config/firebase.js', () => {
-  const admin = require('firebase-admin');
   return {
-    db: admin.firestore(),
-    admin,
-    adminAuth: admin.auth(),
+    db: {
+      collection: jest.fn(), // overridden inside tests
+    },
   };
 });
 
@@ -49,35 +45,41 @@ const {
   getAllBookings,
   deleteBooking,
 } = require('../controllers/booking-controller');
-const { db } = require('../config/firebase');
-const logger = require('../logger');
+
+const { db } = require('../config/firebase.js'); // keep .js to match controller import
+const logger = require('../logger.js');
 
 describe('Booking Controller (Smoke Tests)', () => {
   let req, res;
 
   beforeEach(() => {
     jest.clearAllMocks();
+
     req = {
       body: {},
       params: {},
       query: {},
       headers: {},
     };
+
     res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis(),
+      status: jest.fn(function () { return this; }),
+      json: jest.fn(function () { return this; }),
+      send: jest.fn(function () { return this; }),
+      setHeader: jest.fn(), // in case generateICS path is ever exercised
     };
   });
 
   // --- TEST 1: createBooking ---
   test('createBooking → returns 400 if missing fields', async () => {
-    req.body = { name: 'John Doe' }; // Missing required fields
+    // Only name provided; userId/deskId/dateTimestamp missing
+    req.body = { name: 'John Doe' };
 
     await createBooking(req, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
-      error: 'Name, userId, deskId, startTimestamp, and endTimestamp are required.',
+      error: 'Name, userId, deskId, and dateTimestamp are required.',
     });
   });
 
@@ -85,19 +87,23 @@ describe('Booking Controller (Smoke Tests)', () => {
   test('getBookingsByName → returns 200 with bookings', async () => {
     req.params = { name: 'John Doe' };
 
-    const mockBooking1 = { id: '1', data: () => ({ name: 'John Doe', deskId: 'desk1' }) };
-    const mockForEach = jest.fn((cb) => cb(mockBooking1));
+    // Simulate Firestore query + snapshot
+    const mockDoc = { id: '1', data: () => ({ name: 'John Doe', deskId: 'desk1' }) };
+    const mockWhere = jest.fn().mockReturnThis();
+    const mockGet = jest.fn().mockResolvedValue({
+      empty: false,
+      forEach: (cb) => cb(mockDoc),
+    });
 
-    db.collection = jest.fn().mockReturnValue({
-      where: jest.fn().mockReturnThis(),
-      get: jest.fn().mockResolvedValue({
-        empty: false,
-        forEach: mockForEach,
-      }),
+    db.collection.mockReturnValue({
+      where: mockWhere,
+      get: mockGet,
     });
 
     await getBookingsByName(req, res);
 
+    expect(db.collection).toHaveBeenCalledWith('bookings');
+    expect(mockWhere).toHaveBeenCalledWith('name', '==', 'John Doe');
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
       message: '1 booking(s) returned successfully.',
@@ -107,12 +113,15 @@ describe('Booking Controller (Smoke Tests)', () => {
 
   // --- TEST 3: getAllBookings ---
   test('getAllBookings → returns 404 when empty', async () => {
-    db.collection = jest.fn().mockReturnValue({
-      get: jest.fn().mockResolvedValue({ empty: true }),
+    const mockGet = jest.fn().mockResolvedValue({ empty: true });
+
+    db.collection.mockReturnValue({
+      get: mockGet,
     });
 
     await getAllBookings(req, res);
 
+    expect(db.collection).toHaveBeenCalledWith('bookings');
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({
       error: 'No bookings in database.',
@@ -122,7 +131,7 @@ describe('Booking Controller (Smoke Tests)', () => {
   // --- TEST 4: deleteBooking ---
   test('deleteBooking → returns 401 when no token provided', async () => {
     req.params = { id: 'booking123' };
-    req.headers.authorization = undefined;
+    req.headers.authorization = undefined; // no "Bearer ..." header
 
     await deleteBooking(req, res);
 

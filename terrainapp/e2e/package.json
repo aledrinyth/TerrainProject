@@ -1,0 +1,60 @@
+{
+  "name": "terrainapp-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "description": "End-to-end tests for Terrain App using Playwright",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "//---------------- Local helpers ----------------": "",
+    "install:browsers": "playwright install --with-deps chromium",
+    "dev:emu": "firebase emulators:start --only auth,firestore --project demo-terrain",
+    "dev:api": "cross-env NODE_ENV=development GCP_PROJECT=demo-terrain FIRESTORE_EMULATOR_HOST=localhost:8080 node ../backend/server.js",
+    "dev:web": "cross-env VITE_API_BASE_URL=http://localhost:6969/api npm run dev --prefix ../webapp -- --host 0.0.0.0 --port 5173",
+    "dev:all": "concurrently -k -n EMU,API,WEB \"npm:dev:emu\" \"npm:dev:api\" \"npm:dev:web\"",
+    "wait:all": "wait-on tcp:8080 tcp:9099 http://localhost:6969/api/health http://localhost:5173/login",
+    "seed": "node ./seed-firestore.js",
+    "seed:auth": "node ./seed-auth.js",
+    "seed:all": "npm run seed && npm run seed:auth || true",
+
+    "//---------------- Playwright runners ----------------": "",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:chromium": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:edge": "playwright test --project=edge",
+    "test:auth": "playwright test tests/auth.spec.js",
+    "test:admin": "playwright test tests/admin.spec.js",
+    "test:booking": "playwright test tests/booking.spec.js",
+    "test:my-bookings": "playwright test tests/my-bookings.spec.js",
+    "test:protected": "playwright test tests/protected-routes.spec.js",
+    "report": "playwright show-report",
+
+    "//---------------- One-liners ----------------": "",
+    "e2e": "playwright test --workers=1",
+    "e2e:headed": "playwright test --workers=1 --headed",
+    "e2e:once": "npm run wait:all && npm run seed:all && npm run e2e",
+    "e2e:headed:once": "npm run wait:all && npm run seed:all && npm run e2e:headed",
+
+    "//---------------- CI convenience ----------------": "",
+    "ci:prepare": "npm ci && npm run install:browsers",
+    "ci:start-services": "concurrently -k -n EMU,API,WEB,WAIT \"npm:dev:emu\" \"npm:dev:api\" \"npm:dev:web\"",
+    "ci:seed": "npm run seed:all",
+    "ci:test": "playwright test --workers=1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "concurrently": "^9.0.1",
+    "cross-env": "^7.0.3",
+    "firebase-tools": "^13.29.1",
+    "playwright": "^1.56.1",
+    "wait-on": "^8.0.1"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.5.0"
+  }
+}

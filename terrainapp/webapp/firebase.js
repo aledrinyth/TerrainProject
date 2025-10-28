@@ -1,4 +1,4 @@
-// src/firebase.js
+//firebase.js
 import { initializeApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 

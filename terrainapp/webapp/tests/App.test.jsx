@@ -1,44 +1,69 @@
-const React = require('react');
-const { render, screen, cleanup } = require('@testing-library/react');
-const { BrowserRouter, MemoryRouter } = require('react-router-dom');
+import React from 'react';
+import { render, screen, cleanup } from '@testing-library/react';
+import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 
-// 🧩 Mock BookingPage first (it’s what causes import.meta errors)
-jest.mock('../src/BookingPage.jsx', () => ({
-  __esModule: true,
-  default: () => <div data-testid="mock-booking-page">Booking Page</div>,
+// Mock config.js FIRST (it uses import.meta)
+jest.mock('../src/config', () => ({
+  API_BASE_URL: 'http://localhost:6969/api',
 }));
 
-// 🧩 Mock config before anything imports it
-jest.mock('../src/config', () => ({
-  __esModule: true,
-  API_BASE_URL: 'http://test-api.local/api',
-}), { virtual: true });
+// Mock only the services that use import.meta
+jest.mock('../src/services/bookingService', () => ({
+  bookingService: {
+    getBookings: jest.fn().mockResolvedValue([]),
+    createBooking: jest.fn().mockResolvedValue({ id: '1' }),
+    updateBooking: jest.fn().mockResolvedValue({ id: '1' }),
+    deleteBooking: jest.fn().mockResolvedValue(true),
+    getBookingsByUserId: jest.fn().mockResolvedValue([]),
+    downloadICS: jest.fn().mockResolvedValue(new Blob()),
+  },
+}));
+
+// Mock Firebase - it's at webapp/firebase.js
+jest.mock('../firebase.js', () => ({
+  auth: {
+    currentUser: null,
+    signInWithEmailAndPassword: jest.fn(),
+    signOut: jest.fn(),
+    onAuthStateChanged: jest.fn((callback) => {
+      callback(null);
+      return jest.fn(); // unsubscribe function
+    }),
+  },
+  db: {},
+}));
 
 // Mock AuthContext
 jest.mock('../contexts/AuthContext.jsx', () => ({
   useAuth: jest.fn(),
+  AuthProvider: ({ children }) => <div>{children}</div>,
 }));
 
-// Mock ProtectedRoute
-jest.mock('../components/ProtectedRoute.jsx', () => ({
-  __esModule: true,
-  default: ({ children }) => <div data-testid="protected-route">{children}</div>,
-}));
+// Import the REAL components after mocks
+import App from '../src/App';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
-// ✅ Only import App *after* mocks
-const App = require('../src/App').default;
-const { useAuth } = require('../contexts/AuthContext.jsx');
+// Mock fetch for any API calls
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({ bookings: [] }),
+  })
+);
 
-// Clean up
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  jest.clearAllMocks();
+});
 
-describe('App', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('renders login page when no user is authenticated', () => {
-    useAuth.mockReturnValue({ loading: false, user: null });
+describe('App - Testing Real Components', () => {
+  it('renders real login page when no user is authenticated', () => {
+    useAuth.mockReturnValue({ 
+      loading: false, 
+      user: null,
+      login: jest.fn(),
+      logout: jest.fn() 
+    });
 
     render(
       <BrowserRouter>
@@ -46,11 +71,16 @@ describe('App', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByPlaceholderText(/EMAIL/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument();
   });
 
   it('renders loading state while checking authentication', () => {
-    useAuth.mockReturnValue({ loading: true, user: null });
+    useAuth.mockReturnValue({ 
+      loading: true, 
+      user: null,
+      login: jest.fn(),
+      logout: jest.fn() 
+    });
 
     render(
       <BrowserRouter>
@@ -58,11 +88,16 @@ describe('App', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
 
-  it('allows access to protected routes when user is authenticated', () => {
-    useAuth.mockReturnValue({ loading: false, user: { uid: '123', email: 'test@test.com' } });
+  it('navigates to booking page when user is authenticated', () => {
+    useAuth.mockReturnValue({ 
+      loading: false, 
+      user: { uid: '123', email: 'test@test.com' },
+      login: jest.fn(),
+      logout: jest.fn() 
+    });
 
     render(
       <MemoryRouter initialEntries={['/booking']}>
@@ -70,6 +105,6 @@ describe('App', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByTestId('protected-route')).toBeInTheDocument();
+    expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
   });
 });

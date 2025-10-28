@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
-import { ProvideAuth, useAuth } from '../contexts/AuthContext'; // <-- updated name/path
+import { ProvideAuth, useAuth } from '../contexts/AuthContext';
 import { onAuthStateChanged, getIdTokenResult } from 'firebase/auth';
 
 // Mock your firebase singleton so `auth` exists
@@ -37,7 +37,7 @@ afterEach(() => {
 });
 
 test('shows loading initially (before auth callback resolves)', () => {
-  // Do NOT invoke the callback yet; just return an unsubscribe fn
+  // return an unsubscribe fn
   onAuthStateChanged.mockImplementation((_auth, _cb) => {
     return jest.fn(); // unsubscribe
   });
