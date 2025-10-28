@@ -145,7 +145,7 @@ jobs:
             sleep 3
           fi
 
-  # -------------------- Performance (LHCI + Playwright smoke)
+  # -------------------- Performance (LHCI + API Smoke) -------
   perf:
     name: Performance (LHCI + API Smoke)
     runs-on: ubuntu-latest
@@ -214,10 +214,24 @@ jobs:
         run: npm run seed:all
         working-directory: terrainapp/e2e
 
+      # ---------- Chrome for LHCI ----------
+      - name: Setup Chrome
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Verify Chrome
+        run: |
+          echo "Chrome at: $CHROME_PATH"
+          "$CHROME_PATH" --version
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+
       # Lighthouse CI (expects terrainapp/e2e/.lighthouserc.json)
       - name: Run Lighthouse CI
         run: npx lhci autorun
         working-directory: terrainapp/e2e
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
 
       - name: Upload Lighthouse report
         uses: actions/upload-artifact@v4
@@ -226,7 +240,7 @@ jobs:
           path: terrainapp/e2e/lhci-report
           if-no-files-found: ignore
 
-      # Playwright API smoke
+      # Playwright API smoke 
       - name: Run API smoke (Playwright)
         run: npx playwright test terrainapp/e2e/api-smoke.spec.js --workers=5
         env:
@@ -251,4 +265,3 @@ jobs:
           if [ -f /tmp/pid-services ]; then
             kill -TERM "$(cat /tmp/pid-services)" || true
             sleep 3
-          fi
