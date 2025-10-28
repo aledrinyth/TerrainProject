@@ -8,7 +8,6 @@
         "http://localhost:5173/booking"
       ],
       "settings": {
-        "preset": "mobile",
         "screenEmulation": { "mobile": true, "disabled": false }
       }
     },

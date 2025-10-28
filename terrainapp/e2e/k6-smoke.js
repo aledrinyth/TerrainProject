@@ -17,7 +17,7 @@ export default function () {
   let res = http.get(`${BASE}/health`);
   check(res, { 'health 200': r => r.status === 200 });
 
-  // list bookings (adjust path to your actual route)
+  // list bookings
   res = http.get(`${BASE}/bookings`);
   check(res, { 'list 200': r => r.status === 200 });
 
