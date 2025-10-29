@@ -6,7 +6,7 @@ services:
     image: spine3/firebase-emulator
     environment:
       # Make sure it mateches later the one in app.js
-      - GCP_PROJECT=your-firebase-project-id
+      - GCP_PROJECT=${GCP_PROJECT}
     ports:
       - "4000:4000" # Emulator Suite UI
       - "8080:8080" # Firestore Emulator
@@ -25,6 +25,8 @@ services:
       # This named volume will store the node_modules directory
       # inside the container, completely separate from the host OS.
       - node_modules_volume:/app/node_modules
+    env_file:
+      - ./webapp/.env    
     environment:
       # This variable is required for the Vite dev server to work inside Docker
       - CHOKIDAR_USEPOLLING=true
@@ -37,11 +39,8 @@ services:
     build: ./backend
     ports:
       - "6969:6969"
-    environment:
-      - NODE_ENV=development
-      - FIRESTORE_EMULATOR_HOST=firebase-emulators:8080
-      - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulators:9099
-      - GCP_PROJECT=your-firebase-project-id # Match with the one above
+    env_file:
+      - ./webapp/.env
     depends_on:
       - firebase-emulators
 
