@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
-import { API_BASE_URL } from '../src/config';
+import { API_BASE_URL } from './config';
 import { bookingService } from './services/bookingService';
 import CalendarDatePicker from './CalendarDatePicker';
 
