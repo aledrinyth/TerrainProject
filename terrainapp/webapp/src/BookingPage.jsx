@@ -466,7 +466,7 @@ const handleBookingSubmit = async (bookingData) => {
     console.log('All bookings successful:', results);
     
     // Show success message
-    setSuccessMessage(`Successfully booked ${bookingData.seats.length} seat(s) for ${bookingData.date}`);
+    setSuccessMessage(`Successfully booked ${bookingData.seats.length} seat(s) for ${bookingData.date}. A confirmation email has been sent to your inbox.`);
     setShowSuccess(true);
     
     // Clear selections and refresh availability
