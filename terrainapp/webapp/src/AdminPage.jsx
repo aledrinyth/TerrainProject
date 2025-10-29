@@ -102,12 +102,12 @@ export default function AdminPage() {
   const handleCancelDelete = () => setDeleteConfirm(null);
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen font-sans bg-gray-100 p-4 pt-24">
+    <div className="relative flex flex-col items-center justify-center min-h-screen font-gt-america bg-terrain-white p-4 pt-24">
       <header className="absolute top-[24px] left-[34px] flex items-center w-[calc(100vw-68px)] justify-between pr-20">
         <Logo />
         <button
           onClick={handleLogout}
-          className="px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-500 transition-colors font-sans font-semibold"
+          className="px-4 py-2 bg-terrain-blue text-white rounded-lg hover:bg-opacity-90 hover-cursor-green transition-colors font-gt-america font-semibold"
         >
           Logout
         </button>
@@ -115,7 +115,7 @@ export default function AdminPage() {
 
       {/* Reserve space for header and center content in the remaining viewport */}
       <main className="flex flex-col items-center justify-center min-h-[calc(100vh-144px)] pt-[144px] p-4">
-        <h1 className="text-3xl font-bold mb-8 mt-0 font-mono">
+        <h1 className="text-3xl font-bold mb-8 mt-0 font-gt-america">
           Admin: Current Bookings
         </h1>
 
@@ -139,7 +139,7 @@ export default function AdminPage() {
               <tbody>
                 {bookings.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-gray-500 font-mono">
+                    <td colSpan={6} className="text-center py-8 text-gray-500 font-gt-america">
                       No bookings found.
                     </td>
                   </tr>
@@ -148,13 +148,13 @@ export default function AdminPage() {
                     const dateOfBooking = formatDate(b.dateTimestamp);
                     const isCancelled = (b.status || "").toLowerCase() === "cancelled";
                     return (
-                      <tr key={b.id} className={`hover:bg-sky-50 transition ${isCancelled ? 'opacity-60' : ''}`}>
-                        <td className="px-4 py-2 font-mono">{b.name}</td>
-                        <td className="px-4 py-2 font-mono">{b.deskId}</td>
-                        <td className="px-4 py-2 font-mono">{dateOfBooking}</td>
-                        <td className="px-4 py-2 font-mono">{formatDate(b.createdAt)}</td>
-                        <td className="px-4 py-2 font-mono">{b.status || "active"}</td>
-                        <td className="px-4 py-2 font-mono">
+                      <tr key={b.id} className={`hover:bg-terrain-green hover:bg-opacity-20 transition ${isCancelled ? 'opacity-60' : ''}`}>
+                        <td className="px-4 py-2 font-gt-america">{b.name}</td>
+                        <td className="px-4 py-2 font-gt-america">{b.deskId}</td>
+                        <td className="px-4 py-2 font-gt-america">{dateOfBooking}</td>
+                        <td className="px-4 py-2 font-gt-america">{formatDate(b.createdAt)}</td>
+                        <td className="px-4 py-2 font-gt-america">{b.status || "active"}</td>
+                        <td className="px-4 py-2 font-gt-america">
                           <button
                             onClick={() => handleDeleteClick(b)}
                             className={`px-3 py-1 rounded text-sm transition ${
