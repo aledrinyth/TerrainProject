@@ -1,4 +1,5 @@
 import { apiRequest } from "./api";
+import API_BASE_URL from './api';
 
 export const bookingService = {
 
@@ -56,7 +57,7 @@ export const bookingService = {
 
     // Generate an ICS file for a user to add to their calendar
     generateICSFile: async (userId) => {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:6969'}/api/booking/ics/${userId}`, {
+        const response = await fetch(`${API_BASE_URL}/booking/ics/${userId}`, {
             method: "GET",
             headers: {
                 'Accept': 'text/calendar'
