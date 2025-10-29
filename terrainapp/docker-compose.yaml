@@ -40,7 +40,7 @@ services:
     ports:
       - "6969:6969"
     env_file:
-      - ./webapp/.env
+      - ./backend/.env
     depends_on:
       - firebase-emulators
 
