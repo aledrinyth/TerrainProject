@@ -2,8 +2,7 @@
 import { auth } from '../../firebase';
 
 // NOTE:swap this to read from env if desired
-const API_BASE_URL = "http://localhost:6969/api";
-
+const API_BASE_URL = process.env.API_BASE_URL;
 
 export const apiRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
