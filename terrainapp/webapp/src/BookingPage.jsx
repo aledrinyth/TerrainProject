@@ -533,7 +533,7 @@ const handleBookingSubmit = async (bookingData) => {
           {/* Logout button */}
           <button
             onClick={handleLogout}
-            className="px-4 py-2 bg-terrain-blue text-white rounded-lg hover:bg-opacity-90 hover-cursor-green transition-colors font-gt-america font-semibold"
+            className="px-4 py-2 bg-terrain-blue text-white rounded-lg hover:bg-opacity-90 transition-colors font-gt-america font-semibold"
           >
             Logout
           </button>
@@ -576,7 +576,6 @@ const handleBookingSubmit = async (bookingData) => {
           </div>
         )}
         
-        {/* Removed My Bookings button from here */}
       </div>
 
       {/* Combined desk layout with Kitchen */}

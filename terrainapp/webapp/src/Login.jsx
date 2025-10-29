@@ -117,7 +117,7 @@ export default function Login() {
           />
           <button 
           type="submit"
-          className="w-[358px] h-[60px] border-2 border-black bg-terrain-green font-gt-america hover:opacity-90 transition-all hover-cursor-green"
+          className="w-[358px] h-[60px] border-2 border-black rounded-full bg-terrain-green font-gt-america hover:opacity-90 transition-all hover-cursor-green"
           >
             ENTER
           </button>
