@@ -16,7 +16,7 @@ export default {
         // 'seat-red-border': '#...',
         'terrain-green': '#82F74F',
         'terrain-blue': '#0F45C9',
-        'terrain-white': '#F6F6F6',        
+        'terrain-white': '#F6F6F6',
       },
       borderRadius: {
         '26px': '26px',
