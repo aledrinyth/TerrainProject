@@ -50,11 +50,9 @@ export default function Login() {
       console.log('Is Admin:', isAdmin);
 
       if (isAdmin) {
-        alert('Login successful! Welcome, Admin!');
         navigate('/admin');
         // Redirect to admin dashboard: history.push('/admin') or similar
       } else {
-        alert('Login successful! Welcome, User!');
         navigate('/booking');
         // Redirect to normal user dashboard: history.push('/dashboard')
       }
