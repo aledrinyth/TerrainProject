@@ -11,7 +11,7 @@ const LoginInput = ({ placeholder, type = 'text', value, onChange }) => {
       placeholder={placeholder}
       value={value}
       onChange={onChange}
-      className="w-[358px] h-[60px] border-2 border-black rounded-full text-center font-mono placeholder-black focus:outline-none focus:ring-2 focus:ring-sky-400"
+      className="w-[358px] h-[60px] border-2 border-black rounded-full text-center font-gt-america placeholder-black focus:outline-none focus:ring-2 focus:ring-terrain-blue"
     />
   );
 };
@@ -50,11 +50,9 @@ export default function Login() {
       console.log('Is Admin:', isAdmin);
 
       if (isAdmin) {
-        alert('Login successful! Welcome, Admin!');
         navigate('/admin');
         // Redirect to admin dashboard: history.push('/admin') or similar
       } else {
-        alert('Login successful! Welcome, User!');
         navigate('/booking');
         // Redirect to normal user dashboard: history.push('/dashboard')
       }
@@ -94,7 +92,7 @@ export default function Login() {
   };
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen font-sans bg-gray-100">
+    <div className="relative flex flex-col items-center justify-center min-h-screen font-gt-america bg-terrain-white">
       
       {/* Header with absolute positioning for the logo */}
       <header className="absolute top-[124px]">
@@ -117,12 +115,12 @@ export default function Login() {
           />
           <button 
           type="submit"
-          className="w-[358px] h-[60px] border-2 border-black rounded-full bg-[#D9D9D9] font-mono hover:bg-gray-400 transition-colors"
+          className="w-[358px] h-[60px] border-2 border-black rounded-full bg-terrain-green font-gt-america hover:opacity-90 transition-all hover-cursor-green"
           >
             ENTER
           </button>
         </form>
-        <button type="button" onClick={handleForgotPassword} className="font-mono text-sm mt-2 hover:underline cursor-pointer bg-transparent border-none p-0">
+        <button type="button" onClick={handleForgotPassword} className="font-gt-america text-sm mt-2 hover:underline cursor-pointer bg-transparent border-none p-0">
           FORGOT PASSWORD?
         </button>
       </main>

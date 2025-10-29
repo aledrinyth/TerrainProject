@@ -1,3 +1,50 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Load GT America Mono font */
+@font-face {
+  font-family: 'GT-America';
+  src: url('./assets/fonts/GT America/GT-America-Mono-Thin.woff2') format('woff2'),
+       url('./assets/fonts/GT America/GT-America-Mono-Thin.woff') format('woff');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'GT-America';
+  src: url('./assets/fonts/GT America/GT-America-Mono-Light.woff2') format('woff2'),
+       url('./assets/fonts/GT America/GT-America-Mono-Light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'GT-America';
+  src: url('./assets/fonts/GT America/GT-America-Mono-Regular.woff2') format('woff2'),
+       url('./assets/fonts/GT America/GT-America-Mono-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  body {
+    font-family: 'GT-America', sans-serif;
+    text-transform: uppercase;
+    background-color: #F6F6F6;
+  }
+  
+  input, textarea {
+    text-transform: none;
+  }
+}
+
+@layer utilities {
+  .hover-cursor-green:hover {
+    cursor: pointer;
+    @apply bg-terrain-green;
+  }
+}

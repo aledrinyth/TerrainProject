@@ -9,7 +9,7 @@ import CalendarDatePicker from './CalendarDatePicker';
 const SeatCircle = ({ seatNumber, isBooked, isSelected, onSelect, isLoading }) => {
   let bgColor, borderColor, cursor;
   if (isLoading) {
-    bgColor = "bg-gray-100";
+    bgColor = "bg-terrain-white";
     borderColor = "border-gray-300";
     cursor = "cursor-wait";
   } else if (isBooked) {
@@ -17,12 +17,12 @@ const SeatCircle = ({ seatNumber, isBooked, isSelected, onSelect, isLoading }) =
     borderColor = "border-red-600";
     cursor = "cursor-not-allowed";
   } else if (isSelected) {
-    bgColor = "bg-indigo-600";
-    borderColor = "border-indigo-800";
+    bgColor = "bg-terrain-blue";
+    borderColor = "border-terrain-blue";
     cursor = "cursor-pointer";
   } else {
-    bgColor = "bg-green-400";
-    borderColor = "border-green-600";
+    bgColor = "bg-terrain-green";
+    borderColor = "border-terrain-green";
     cursor = "cursor-pointer";
   }
 
@@ -46,7 +46,7 @@ const SeatCircle = ({ seatNumber, isBooked, isSelected, onSelect, isLoading }) =
       {isLoading ? (
         <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
       ) : (
-        <span className="font-sans text-xl text-white font-bold">{seatNumber}</span>
+        <span className="font-gt-america text-xl text-white font-bold">{seatNumber}</span>
       )}
     </div>
   );
@@ -96,18 +96,18 @@ const BookingModal = ({ isOpen, onClose, selectedDate, selectedSeats, onBookingS
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-        <h2 className="text-2xl font-bold mb-4">New Booking</h2>
+        <h2 className="text-2xl font-bold mb-4 font-gt-america">New Booking</h2>
         
         {/* Selected seats display */}
         <div className="mb-4">
-          <label className="block mb-2 font-semibold">Selected Seat</label>
-          <div className="bg-gray-100 p-2 rounded border">
+          <label className="block mb-2 font-semibold font-gt-america">Selected Seat</label>
+          <div className="bg-terrain-white p-2 rounded border">
             {selectedSeats.length > 0 ? (
-              <span className="text-indigo-600 font-semibold">
+              <span className="text-terrain-blue font-semibold font-gt-america">
                 Seat: {selectedSeats.join(', ')}
               </span>
             ) : (
-              <span className="text-gray-500">No seat selected</span>
+              <span className="text-gray-500 font-gt-america">No seat selected</span>
             )}
           </div>
         </div>
@@ -117,7 +117,7 @@ const BookingModal = ({ isOpen, onClose, selectedDate, selectedSeats, onBookingS
           Date
           <input
             type="text"
-            className="border p-2 rounded mb-4 block w-full bg-gray-200"
+            className="border p-2 rounded mb-4 block w-full bg-gray-200 font-gt-america"
             value={selectedDate || ""}
             disabled
             readOnly
@@ -126,7 +126,7 @@ const BookingModal = ({ isOpen, onClose, selectedDate, selectedSeats, onBookingS
         
         {/* Error message */}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded mb-4">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded mb-4 font-gt-america">
             {error}
           </div>
         )}
@@ -134,14 +134,14 @@ const BookingModal = ({ isOpen, onClose, selectedDate, selectedSeats, onBookingS
         <div className="flex gap-4">
           <button 
             onClick={onClose}
-            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
+            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition-colors font-gt-america"
             disabled={isSubmitting}
           >
             Cancel
           </button>
           <button 
             onClick={handleSubmit}
-            className="px-4 py-2 bg-sky-400 text-white rounded hover:bg-sky-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-terrain-blue text-white rounded hover:bg-opacity-90 hover-cursor-green transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-gt-america"
             disabled={selectedSeats.length === 0 || isSubmitting}
           >
             {isSubmitting ? (
@@ -233,7 +233,7 @@ const Logo = () => {
 const Kitchen = () => {
   return (
     <div className="w-[150px] h-[459px] bg-gray-200 border-2 border-black rounded-lg flex items-center justify-center">
-      <span className="font-mono text-3xl font-bold transform -rotate-90 whitespace-nowrap">Kitchen</span>
+      <span className="font-gt-america text-3xl font-bold transform -rotate-90 whitespace-nowrap">Kitchen</span>
     </div>
   );
 };
@@ -281,13 +281,13 @@ const SuccessNotification = ({ message, isVisible, onClose, onAddToCalendar }) =
   if (!isVisible) return null;
 
   return (
-    <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+    <div className="fixed top-4 right-4 bg-terrain-green text-white px-6 py-3 rounded-lg shadow-lg z-50">
       <div className="flex items-center gap-2">
         <span>✓</span>
         <span>{message}</span>
         <button onClick={onAddToCalendar}
 
-          className="ml-3 px-3 py-1 bg-sky-400 hover:bg-sky-500 text-white rounded text-sm transition-colors">Add to calendar</button>
+          className="ml-3 px-3 py-1 bg-terrain-blue hover:bg-opacity-90 text-white rounded text-sm transition-colors">Add to calendar</button>
         <button onClick={onClose} className="ml-2 text-white hover:text-gray-200">×</button>
       </div>
     </div>
@@ -508,7 +508,7 @@ const handleBookingSubmit = async (bookingData) => {
   // **END: Retained Changes for Navigation**
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen font-sans bg-gray-100 p-4 pt-24">
+    <div className="relative flex flex-col items-center justify-center min-h-screen font-gt-america bg-terrain-white p-4 pt-24">
       {/* Success Notification */}
       <SuccessNotification 
         message={successMessage}
@@ -526,14 +526,14 @@ const handleBookingSubmit = async (bookingData) => {
           <button 
             onClick={handleViewMyBookings}
             // Adjusted padding to match Logout button size
-            className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors font-sans font-semibold"
+            className="px-4 py-2 bg-terrain-blue text-white rounded-lg hover:bg-terrain-blue transition-colors font-gt-america font-semibold"
           >
             My Bookings
           </button>
           {/* Logout button */}
           <button
             onClick={handleLogout}
-            className="px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-600 transition-colors font-sans font-semibold"
+            className="px-4 py-2 bg-terrain-blue text-white rounded-lg hover:bg-opacity-90 transition-colors font-gt-america font-semibold"
           >
             Logout
           </button>
@@ -545,7 +545,7 @@ const handleBookingSubmit = async (bookingData) => {
         <div className="relative">
           <button
             onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-            className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-sans font-semibold text-lg shadow-md hover:shadow-lg flex items-center gap-2"
+            className="px-6 py-3 bg-terrain-green text-white rounded-lg hover:bg-opacity-90 hover-cursor-green transition-colors font-gt-america font-semibold text-lg shadow-md hover:shadow-lg flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -571,12 +571,11 @@ const handleBookingSubmit = async (bookingData) => {
         </div>
         
         {selectedSeats.length > 0 && (
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 font-gt-america">
             Selected: {selectedSeats.length} seat(s) - {selectedSeats.join(', ')}
           </div>
         )}
         
-        {/* Removed My Bookings button from here */}
       </div>
 
       {/* Combined desk layout with Kitchen */}
