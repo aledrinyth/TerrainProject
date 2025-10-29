@@ -3,6 +3,7 @@ const express = require("express");
 const { db } = require("../config/firebase.js");
 const { getAuth } = require("firebase-admin/auth");
 const ics = require("ics")
+const { sendBookingConfirmation, sendBookingCancellation } = require("../services/emailService");
 
 /**
  * Summary: Creates a booking.
@@ -72,6 +73,33 @@ const createBooking = async (req, res) => {
             status: "active",
             createdAt: new Date()
         });
+
+        // Get user email from Firebase Auth for sending confirmation email
+        let userEmail = null;
+        try {
+            const userRecord = await getAuth().getUser(userId);
+            userEmail = userRecord.email;
+        } catch (authError) {
+            logger.warn(`Could not get user email for userId ${userId}: ${authError.message}`);
+        }
+
+        // Send confirmation email if we have the user's email
+        if (userEmail) {
+            try {
+                const bookingData = {
+                    bookingId: bookingRef.id,
+                    date: dateDT,
+                    timeSlot: "All Day",
+                    seatNumber: deskId,
+                    customerName: name
+                };
+                
+                await sendBookingConfirmation(bookingData, userEmail);
+                logger.info(`Confirmation email sent for booking ${bookingRef.id} to ${userEmail}`);
+            } catch (emailError) {
+                logger.error(`Failed to send confirmation email for booking ${bookingRef.id}: ${emailError.message}`);
+            }
+        }
 
         // Success
         return res.status(201).json({
@@ -418,20 +446,53 @@ const cancelBooking = async (req, res) => {
 
         // Update booking with the specified information
         const bookingRef = db.collection("bookings").doc(id);
-        await bookingRef.update(updateData);
-
-        const bookingSnapshot = await bookingRef.get(); // Get for validation and return
-
+        
+        // Get booking data before updating for email notification
+        const bookingSnapshot = await bookingRef.get();
         if (!bookingSnapshot.exists) {
             return res.status(404).json({ error: "No booking with id " + id + " found." });
         }
+        
+        const bookingData = bookingSnapshot.data();
+        
+        await bookingRef.update(updateData);
+
+        // Get user email from Firebase Auth for sending cancellation email
+        let userEmail = null;
+        try {
+            const userRecord = await getAuth().getUser(bookingData.userId);
+            userEmail = userRecord.email;
+        } catch (authError) {
+            logger.warn(`Could not get user email for userId ${bookingData.userId}: ${authError.message}`);
+        }
+
+        // Send cancellation email if we have the user's email
+        if (userEmail) {
+            try {
+                const emailBookingData = {
+                    bookingId: id,
+                    date: bookingData.dateTimestamp,
+                    timeSlot: "All Day",
+                    seatNumber: bookingData.deskId,
+                    customerName: bookingData.name
+                };
+                
+                await sendBookingCancellation(emailBookingData, userEmail, reason);
+                logger.info(`Cancellation email sent for booking ${id} to ${userEmail}`);
+            } catch (emailError) {
+                logger.error(`Failed to send cancellation email for booking ${id}: ${emailError.message}`);
+            }
+        }
+
+        // Get updated booking data for response
+        const updatedBookingSnapshot = await bookingRef.get();
 
         // Success
         return res.status(200).json({
             message: "Booking cancelled successfully.",
             booking: {
-                id: bookingSnapshot.id,
-                ...bookingSnapshot.data()
+                id: updatedBookingSnapshot.id,
+                ...updatedBookingSnapshot.data()
             }
         });
 
