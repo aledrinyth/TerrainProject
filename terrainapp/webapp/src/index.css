@@ -36,6 +36,6 @@
 @layer utilities {
   .hover-cursor-green:hover {
     cursor: pointer;
-    background-color: #82F74F;
+    @apply bg-terrain-green;
   }
 }
