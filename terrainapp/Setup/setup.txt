@@ -74,10 +74,10 @@ example
 
 # Make sure theres no whitespace after
 <EMAIL_FOR_EMAIL_CONFIRMATION>
-
+EMAIL_USER=
 </EMAIL_FOR_EMAIL_CONFIRMATION>
 
 # Make sure theres no whitespace after
 <PASSWORD_FOR_EMAIL_CONFIRMATION>
-
+EMAIL_PASSWORD=
 </PASSWORD_FOR_EMAIL_CONFIRMATION>
