@@ -513,10 +513,10 @@ const setAdmin = async (req, res) => {
 
   try {
     // Find the user in Firebase Auth by their email
-    const user = await getUserByEmail(email);
+    const user = await adminAuth.getUserByEmail(email);
 
     // Set the custom claim. This will overwrite any existing claims.
-    await setCustomUserClaims(user.uid, { admin: true });
+    await adminAuth.setCustomUserClaims(user.uid, { admin: true });
 
     return res.status(200).json({ message: `Successfully promoted ${email} to admin.` });
   } catch (error) {
