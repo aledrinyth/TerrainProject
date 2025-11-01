@@ -44,9 +44,17 @@
     "ci:prepare": "npm ci && npm run install:browsers",
     "ci:start-services": "concurrently -k -n EMU,API,WEB,WAIT \"npm:dev:emu\" \"npm:dev:api\" \"npm:dev:web\"",
     "ci:seed": "npm run seed:all",
-    "ci:test": "playwright test --workers=1"
+    "ci:test": "playwright test --workers=1",
+
+    "//---------------- Performance ----------------": "",
+    "perf:web": "lhci autorun",
+
+    "//---------------- API Smoke ----------------": "",
+    "smoke:api": "cross-env API_BASE=http://localhost:6969/api SMOKE_RUNS=10 SMOKE_MAX_MS=300 playwright test terrainapp/e2e/api-smoke.spec.js --workers=5",
+    "perf:once": "npm run wait:all && npm run seed:all && npm run perf:web && npm run smoke:api"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.56.1",
     "concurrently": "^9.0.1",
     "cross-env": "^7.0.3",
