@@ -68,7 +68,7 @@ npm install
 npm run build
 
 # Rewrite and deploy
-firebase use ${PROJECT_NAME}
+firebase use ${FIREBASE_HOSTING_SITE}
 
 # Pipe the output to grep directly
 DEPLOY_OUTPUT=$(firebase deploy --only hosting,functions 2>&1)
