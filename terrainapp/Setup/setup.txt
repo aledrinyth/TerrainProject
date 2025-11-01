@@ -1,11 +1,11 @@
 <GENERAL_ENV>
-PROJECT_ID_FIREBASE=""
+PROJECT_ID_FIREBASE="" # The project name in your firebase
 
 FIRESTORE_EMULATOR_HOST=localhost:8080
 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
 
 DATABASE_NAME = "(default)" # firebase.js
-FIREBASE_PROJECT_ID="" # firebase.js
+FIREBASE_PROJECT_ID="" # firebase.js | The project name in your firebase
 </GENERAL_ENV>
 
 <GENERAL_ENV_EXAMPLE>
