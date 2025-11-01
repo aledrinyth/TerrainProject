@@ -15,6 +15,14 @@ sed -n '/<EMAIL_FOR_EMAIL_CONFIRMATION>/,/<\/EMAIL_FOR_EMAIL_CONFIRMATION>/ { //
 
 sed -n '/<PASSWORD_FOR_EMAIL_CONFIRMATION>/,/<\/PASSWORD_FOR_EMAIL_CONFIRMATION>/ { //d; p ; }' setup.txt >> ../backend/.env
 
+# Ask how many days you want to set the cleanup policy to
+read -p "Enter how many days do you want to keep container images before they're deleted? " POLICY_LENGTH
+
+# Ask for the location of the database you will be using
+read -p "Enter where your database is located(e.g:nam5)? " DATABASE_LOCATION
+
+firebase functions:artifacts:setpolicy --days ${POLICY_LENGTH}
+
 # Create the firebase.json file necessary
 cat > ../firebase.json << EOL
 {
@@ -74,8 +82,8 @@ npm run build
 # Rewrite and deploy
 firebase use ${FIREBASE_HOSTING_SITE}
 
-# Pipe the output to grep directly
-DEPLOY_OUTPUT=$(firebase deploy --only hosting,functions 2>&1)
+# 1. Execute the deployment and capture its standard output (stdout)
+DEPLOY_OUTPUT=$(firebase deploy --only hosting,functions)
 
 # 2. Extract the URL using grep to find the line and awk to split it
 HOSTING_URL=$(echo "$DEPLOY_OUTPUT" | \
