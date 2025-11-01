@@ -1,0 +1,73 @@
+<GENERAL_ENV>
+PROJECT_ID_FIREBASE="example"
+
+FIRESTORE_EMULATOR_HOST=localhost:8080
+FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
+
+DATABASE_NAME = "(default)" # firebase.js
+FIREBASE_PROJECT_ID="example" # firebase.js
+</GENERAL_ENV>
+
+<GENERAL_ENV_EXAMPLE>
+PROJECT_ID_FIREBASE="example"
+
+FIRESTORE_EMULATOR_HOST=localhost:8080
+FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
+
+DATABASE_NAME = "(default)" # firebase.js
+FIREBASE_PROJECT_ID="example" # firebase.js
+</GENERAL_ENV_EXAMPLE>
+
+<WEBAPP_ENV>
+# Firebase Configuration
+VITE_FIREBASE_API_KEY=""
+VITE_FIREBASE_AUTH_DOMAIN=""
+VITE_FIREBASE_PROJECT_ID=""
+VITE_FIREBASE_STORAGE_BUCKET=""
+VITE_FIREBASE_MESSAGING_SENDER_ID=""
+VITE_FIREBASE_APP_ID=""
+
+# API Configuration
+# Example 
+# API_BASE_URL="$example.web.app/api"
+API_BASE_URL=""
+# VITE_API_BASE_URL=${API_BASE_URL} #api.js | config.js
+</WEBAPP_ENV>
+
+<WEBAPP_ENV_EXAMPLE>
+# Firebase Configuration
+VITE_FIREBASE_API_KEY="example"
+VITE_FIREBASE_AUTH_DOMAIN="example"
+VITE_FIREBASE_PROJECT_ID="example"
+VITE_FIREBASE_STORAGE_BUCKET="example"
+VITE_FIREBASE_MESSAGING_SENDER_ID="example"
+VITE_FIREBASE_APP_ID="example"
+
+# API Configuration
+# Example 
+# API_BASE_URL="$example.web.app/api"
+API_BASE_URL="https://example.web.app/api"
+# VITE_API_BASE_URL=${API_BASE_URL} #api.js | config.js
+</WEBAPP_ENV_EXAMPLE>
+
+
+
+<PROJECT_NAME_EXAMPLE>
+example
+</PROJECT_NAME_EXAMPLE>
+
+# Make sure theres no whitespace after
+<PROJECT_NAME>
+
+</PROJECT_NAME>
+
+
+
+<FIREBASE_HOSTING_SITE_EXAMPLE>
+example
+</FIREBASE_HOSTING_SITE_EXAMPLE>
+
+# Make sure theres no whitespace after
+<FIREBASE_HOSTING_SITE>
+
+</FIREBASE_HOSTING_SITE>

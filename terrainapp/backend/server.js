@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const functions = require('firebase-functions');
 
 // Import router files
 const bookingRoutes = require('./routers/booking-router');
@@ -23,7 +24,5 @@ app.use(express.json()); // Checks for JSON body in requests
 app.use('/api/booking', bookingRoutes);
 app.use('/api/user', userRoutes);
 
-// Listen for requests
-app.listen(6969, () => {
-    console.log('Node backend on port: 6969');
-})
+// Expose the Express app as a Cloud Function
+exports.app = functions.https.onRequest(app);

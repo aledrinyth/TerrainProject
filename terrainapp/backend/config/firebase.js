@@ -1,7 +1,11 @@
 const admin = require('firebase-admin');
+const path = require('path');
+
+// Load environment variables from .env file in the parent directory
+require('dotenv').config({ path: path.join(__dirname, '../..', '.env') });
 
 // Environment-based configuration
-const PROJECT_ID = process.env.GCP_PROJECT;
+const PROJECT_ID = process.env.PROJECT_ID_FIREBASE;
 
 // Initialize Firebase Admin
 admin.initializeApp({
@@ -10,14 +14,12 @@ admin.initializeApp({
 
 // Get Firestore instance
 const db = admin.firestore();
-const adminAuth = admin.auth()
 
-// For development, disable SSL warnings from emulator
-if (process.env.NODE_ENV !== 'production') {
-    db.settings({
-        host: process.env.FIRESTORE_EMULATOR_HOST,
-        ssl: false
-    });
-}
+// In the event that you want to use a database that is not (default)
+db.settings({
+  databaseId: process.env.DATABASE_NAME
+});
+
+const adminAuth = admin.auth()
 
 module.exports = { db, admin, adminAuth };

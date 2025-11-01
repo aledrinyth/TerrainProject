@@ -18,10 +18,4 @@ const app = initializeApp(firebaseConfig);
 // Get the auth instance
 const auth = getAuth(app);
 
-// Connect to the Firebase Auth Emulator
-if (process.env.NODE_ENV === 'development') {
-  connectAuthEmulator(auth, "http://localhost:9099");
-  console.log("Connected to local Firebase Auth Emulator");
-}
-
 export { auth };

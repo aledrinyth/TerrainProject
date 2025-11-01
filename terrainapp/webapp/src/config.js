@@ -1,4 +1,4 @@
-let apiUrl = "http://localhost:6969/api";
+let apiUrl = import.meta.env.VITE_API_URL;
 
 try {
   // Vite injects import.meta.env only in browser builds
