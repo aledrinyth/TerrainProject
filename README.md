@@ -132,3 +132,45 @@ The TERRAIN Desk Booking System is a modern web application built with a microse
 - **Auth Emulator**: 9099
 - **Functions Emulator**: 5001
 - **Storage Emulator**: 9199
+
+
+### .ENV file templates
+backend/.env
+```
+EMAIL_USER=email@ethereal.email
+EMAIL_PASSWORD=PASSWORD
+
+# Firebase Configuration
+
+NODE_ENV=development
+FIRESTORE_EMULATOR_HOST=firebase-emulators:8080
+FIREBASE_AUTH_EMULATOR_HOST=firebase-emulators:9099
+```
+
+webapp/.env
+```
+# Firebase Configuration (Local development with emulators)
+VITE_FIREBASE_API_KEY="demo-api-key"
+VITE_FIREBASE_AUTH_DOMAIN="example"
+VITE_FIREBASE_PROJECT_ID="example"
+VITE_FIREBASE_STORAGE_BUCKET="example"
+VITE_FIREBASE_MESSAGING_SENDER_ID="123456789"
+VITE_FIREBASE_APP_ID="1:123456789:web:abcdef123456"
+
+# API Configuration
+# Example 
+# API_BASE_URL="https://example.web.app/api"
+API_BASE_URL="http://localhost:6969/api"
+VITE_API_BASE_URL="http://localhost:6969/api"
+```
+terrainproject/.env
+```
+PROJECT_ID_FIREBASE="" # The project name in your firebase
+GCP_PROJECT="" # Required for Firebase emulator, will break the live production so do not include in live
+
+FIRESTORE_EMULATOR_HOST=localhost:8080
+FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
+
+DATABASE_NAME = "(default)" # firebase.js
+FIREBASE_PROJECT_ID="example" # firebase.js | The project name in your firebase
+```
