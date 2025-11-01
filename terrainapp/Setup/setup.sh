@@ -11,6 +11,10 @@ PROJECT_NAME=$(sed -n '/<PROJECT_NAME>/,/<\/PROJECT_NAME>/ { //d; p ; }' setup.t
 # Read the setup files to get the firebase hosting site
 FIREBASE_HOSTING_SITE=$(sed -n '/<FIREBASE_HOSTING_SITE>/,/<\/FIREBASE_HOSTING_SITE>/ { //d; p ; }' setup.txt)
 
+sed -n '/<EMAIL_FOR_EMAIL_CONFIRMATION>/,/<\/EMAIL_FOR_EMAIL_CONFIRMATION>/ { //d; p ; }' setup.txt > ../backend/.env
+
+sed -n '/<PASSWORD_FOR_EMAIL_CONFIRMATION>/,/<\/PASSWORD_FOR_EMAIL_CONFIRMATION>/ { //d; p ; }' setup.txt >> ../backend/.env
+
 # Create the firebase.json file necessary
 cat > ../firebase.json << EOL
 {
