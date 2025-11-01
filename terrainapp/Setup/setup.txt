@@ -30,8 +30,7 @@ VITE_FIREBASE_APP_ID=""
 # API Configuration
 # Example 
 # API_BASE_URL="https://example.web.app/api"
-API_BASE_URL=""
-# VITE_API_BASE_URL=${API_BASE_URL} #api.js | config.js
+VITE_API_BASE_URL="" #api.js | config.js
 </WEBAPP_ENV>
 
 <WEBAPP_ENV_EXAMPLE>
@@ -47,7 +46,7 @@ VITE_FIREBASE_APP_ID="example"
 # Example 
 # API_BASE_URL="$example.web.app/api"
 API_BASE_URL="https://example.web.app/api"
-# VITE_API_BASE_URL=${API_BASE_URL} #api.js | config.js
+VITE_API_BASE_URL="" #api.js | config.js
 </WEBAPP_ENV_EXAMPLE>
 
 

@@ -91,7 +91,6 @@ const sendBookingConfirmation = async (bookingData, userEmail) => {
                             </div>
 
                             <p><strong>Important:</strong> Please pay at the counter when you arrive.</p>
-                            <p>If you need to cancel or modify your booking, please contact us as soon as possible.</p>
                         </div>
                         <div class="footer">
                             <p>This is an automated message, please do not reply to this email.</p>
