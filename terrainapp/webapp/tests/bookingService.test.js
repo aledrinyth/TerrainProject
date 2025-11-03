@@ -1,85 +1,15 @@
 // tests/bookingService.test.js
 
-// Mock the entire bookingService module BEFORE importing
-jest.mock('../src/services/bookingService', () => {
-  const actualApi = jest.requireActual('../src/services/api');
-  
-  return {
-    bookingService: {
-      createBooking: jest.fn((bookingData) => {
-        const apiRequest = require('../src/services/api').apiRequest;
-        return apiRequest('/booking', {
-          method: "POST",
-          body: JSON.stringify(bookingData)
-        });
-      }),
-      
-      getBookingById: jest.fn((id) => {
-        const apiRequest = require('../src/services/api').apiRequest;
-        return apiRequest(`/booking/${id}`);
-      }),
-      
-      getBookingsByName: jest.fn((name) => {
-        const apiRequest = require('../src/services/api').apiRequest;
-        return apiRequest(`/booking/name/${name}`);
-      }),
-      
-      getBookingsByDate: jest.fn((dateTimestamp) => {
-        const apiRequest = require('../src/services/api').apiRequest;
-        const queryParams = `dateTimestamp=${encodeURIComponent(dateTimestamp)}`;
-        return apiRequest(`/booking/by-date?${queryParams}`);
-      }),
-      
-      getAllBookings: jest.fn(() => {
-        const apiRequest = require('../src/services/api').apiRequest;
-        return apiRequest('/booking');
-      }),
-      
-      updateBooking: jest.fn((id, bookingData) => {
-        const apiRequest = require('../src/services/api').apiRequest;
-        return apiRequest(`/booking/${id}`, {
-          method: "PATCH",
-          body: JSON.stringify(bookingData)
-        });
-      }),
-      
-      cancelBooking: jest.fn((id, reason) => {
-        const apiRequest = require('../src/services/api').apiRequest;
-        return apiRequest(`/booking/cancel/${id}`, {
-          method: "PATCH",
-          body: JSON.stringify({ reason })
-        });
-      }),
-      
-      deleteBooking: jest.fn((id) => {
-        const apiRequest = require('../src/services/api').apiRequest;
-        return apiRequest(`/booking/${id}`, {
-          method: "DELETE"
-        });
-      }),
-      
-      generateICSFile: jest.fn(async (userId) => {
-        const baseUrl = 'http://localhost:6969';
-        const response = await fetch(`${baseUrl}/api/booking/ics/${userId}`, {
-          method: "GET",
-          headers: { 'Accept': 'text/calendar' }
-        });
-        
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Failed to generate ICS file');
-        }
-        return await response.text();
-      })
-    }
-  };
-});
+// --- Mock the API module completely BEFORE anything imports it ---
+jest.mock('../src/services/api', () => ({
+  __esModule: true,                     // default export works
+  default: 'http://localhost:6969/api', // mocks API_BASE_URL default export
+  apiRequest: jest.fn(),                // named export used by bookingService
+}));
 
-// Mock the api module
-jest.mock('../src/services/api');
-
-// Now import this will use the mocked version
+// import the real bookingService 
 const { bookingService } = require('../src/services/bookingService');
+// import the mocked apiRequest to set expectations
 const { apiRequest } = require('../src/services/api');
 
 // Mock fetch for generateICSFile tests
@@ -92,19 +22,14 @@ describe('bookingService', () => {
 
   describe('createBooking', () => {
     test('calls apiRequest with correct endpoint and POST method', async () => {
-      const bookingData = { 
-        name: 'John Doe', 
-        deskId: 5, 
-        startTime: '09:00', 
-        endTime: '17:00' 
-      };
+      const bookingData = { name: 'John Doe', deskId: 5, startTime: '09:00', endTime: '17:00' };
       apiRequest.mockResolvedValue({ id: 1, ...bookingData });
 
       await bookingService.createBooking(bookingData);
 
       expect(apiRequest).toHaveBeenCalledWith('/booking', {
         method: 'POST',
-        body: JSON.stringify(bookingData)
+        body: JSON.stringify(bookingData),
       });
       expect(apiRequest).toHaveBeenCalledTimes(1);
     });
@@ -186,7 +111,7 @@ describe('bookingService', () => {
     test('returns array of bookings from apiRequest', async () => {
       const mockBookings = [
         { id: 1, date: '2025-10-22' },
-        { id: 2, date: '2025-10-22' }
+        { id: 2, date: '2025-10-22' },
       ];
       apiRequest.mockResolvedValue(mockBookings);
 
@@ -209,7 +134,7 @@ describe('bookingService', () => {
     test('returns array of bookings from apiRequest', async () => {
       const mockBookings = [
         { id: 1, name: 'Booking 1' },
-        { id: 2, name: 'Booking 2' }
+        { id: 2, name: 'Booking 2' },
       ];
       apiRequest.mockResolvedValue(mockBookings);
 
@@ -229,7 +154,7 @@ describe('bookingService', () => {
 
       expect(apiRequest).toHaveBeenCalledWith('/booking/50', {
         method: 'PATCH',
-        body: JSON.stringify(updateData)
+        body: JSON.stringify(updateData),
       });
       expect(apiRequest).toHaveBeenCalledTimes(1);
     });
@@ -254,7 +179,7 @@ describe('bookingService', () => {
 
       expect(apiRequest).toHaveBeenCalledWith('/booking/cancel/75', {
         method: 'PATCH',
-        body: JSON.stringify({ reason })
+        body: JSON.stringify({ reason }),
       });
       expect(apiRequest).toHaveBeenCalledTimes(1);
     });
@@ -266,16 +191,12 @@ describe('bookingService', () => {
 
       expect(apiRequest).toHaveBeenCalledWith('/booking/cancel/100', {
         method: 'PATCH',
-        body: JSON.stringify({ reason: '' })
+        body: JSON.stringify({ reason: '' }),
       });
     });
 
     test('returns cancellation response from apiRequest', async () => {
-      const mockResponse = { 
-        id: 75, 
-        status: 'cancelled', 
-        reason: 'User request' 
-      };
+      const mockResponse = { id: 75, status: 'cancelled', reason: 'User request' };
       apiRequest.mockResolvedValue(mockResponse);
 
       const result = await bookingService.cancelBooking(75, 'User request');
@@ -292,7 +213,7 @@ describe('bookingService', () => {
       await bookingService.deleteBooking(bookingId);
 
       expect(apiRequest).toHaveBeenCalledWith('/booking/88', {
-        method: 'DELETE'
+        method: 'DELETE',
       });
       expect(apiRequest).toHaveBeenCalledTimes(1);
     });
@@ -315,10 +236,10 @@ describe('bookingService', () => {
     test('calls fetch with correct URL and headers', async () => {
       const userId = 123;
       const mockICSContent = 'BEGIN:VCALENDAR\nEND:VCALENDAR';
-      
+
       fetch.mockResolvedValue({
         ok: true,
-        text: jest.fn().mockResolvedValue(mockICSContent)
+        text: jest.fn().mockResolvedValue(mockICSContent),
       });
 
       await bookingService.generateICSFile(userId);
@@ -327,17 +248,17 @@ describe('bookingService', () => {
         'http://localhost:6969/api/booking/ics/123',
         {
           method: 'GET',
-          headers: { 'Accept': 'text/calendar' }
+          headers: { Accept: 'text/calendar' },
         }
       );
     });
 
     test('returns ICS file content as text', async () => {
       const mockICSContent = 'BEGIN:VCALENDAR\nVERSION:2.0\nEND:VCALENDAR';
-      
+
       fetch.mockResolvedValue({
         ok: true,
-        text: jest.fn().mockResolvedValue(mockICSContent)
+        text: jest.fn().mockResolvedValue(mockICSContent),
       });
 
       const result = await bookingService.generateICSFile(456);
@@ -347,26 +268,22 @@ describe('bookingService', () => {
 
     test('throws error when response is not ok', async () => {
       const errorResponse = { error: 'User not found' };
-      
+
       fetch.mockResolvedValue({
         ok: false,
-        json: jest.fn().mockResolvedValue(errorResponse)
+        json: jest.fn().mockResolvedValue(errorResponse),
       });
 
-      await expect(bookingService.generateICSFile(999))
-        .rejects
-        .toThrow('User not found');
+      await expect(bookingService.generateICSFile(999)).rejects.toThrow('User not found');
     });
 
     test('throws default error message when error response has no error field', async () => {
       fetch.mockResolvedValue({
         ok: false,
-        json: jest.fn().mockResolvedValue({})
+        json: jest.fn().mockResolvedValue({}),
       });
 
-      await expect(bookingService.generateICSFile(999))
-        .rejects
-        .toThrow('Failed to generate ICS file');
+      await expect(bookingService.generateICSFile(999)).rejects.toThrow('Failed to generate ICS file');
     });
   });
 
@@ -375,36 +292,28 @@ describe('bookingService', () => {
       const error = new Error('Network error');
       apiRequest.mockRejectedValue(error);
 
-      await expect(bookingService.createBooking({}))
-        .rejects
-        .toThrow('Network error');
+      await expect(bookingService.createBooking({})).rejects.toThrow('Network error');
     });
 
     test('propagates errors from apiRequest in getBookingById', async () => {
       const error = new Error('Not found');
       apiRequest.mockRejectedValue(error);
 
-      await expect(bookingService.getBookingById(999))
-        .rejects
-        .toThrow('Not found');
+      await expect(bookingService.getBookingById(999)).rejects.toThrow('Not found');
     });
 
     test('propagates errors from apiRequest in updateBooking', async () => {
       const error = new Error('Validation error');
       apiRequest.mockRejectedValue(error);
 
-      await expect(bookingService.updateBooking(1, {}))
-        .rejects
-        .toThrow('Validation error');
+      await expect(bookingService.updateBooking(1, {})).rejects.toThrow('Validation error');
     });
 
     test('propagates errors from apiRequest in getBookingsByDate', async () => {
       const error = new Error('Invalid date format');
       apiRequest.mockRejectedValue(error);
 
-      await expect(bookingService.getBookingsByDate('invalid'))
-        .rejects
-        .toThrow('Invalid date format');
+      await expect(bookingService.getBookingsByDate('invalid')).rejects.toThrow('Invalid date format');
     });
   });
 });
