@@ -14,7 +14,7 @@ const cfg = {
 const app = initializeApp(cfg);
 const auth = getAuth(app);
 
-// connect to emulator BEFORE any other auth call happens
+// connect to emulator before any other auth call happens
 const shouldUseEmu =
   import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true' ||
   ['localhost', '127.0.0.1'].includes(window.location.hostname);
