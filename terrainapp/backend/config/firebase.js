@@ -7,11 +7,11 @@ require('dotenv').config({ path: path.join(__dirname, '../..', '.env') });
 
 // GCP_PROJECT and fall back ---
 const PROJECT_ID =
-  process.env.GCP_PROJECT ||          // <— used by npm:dev:api / CI
+  process.env.GCP_PROJECT ||          // used by npm:dev:api / CI
   process.env.PROJECT_ID_FIREBASE ||  
-  'demo-terrain';                     // <— safe default for local
+  'demo-terrain';                     // safe default for local
 
-// Initialize Firebase Admin (guard against double-init in tests/tools)
+// Initialize Firebase Admin 
 if (!admin.apps.length) {
   admin.initializeApp({ projectId: PROJECT_ID });
 }
