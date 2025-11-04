@@ -1,73 +1,89 @@
-// tests/firebase-admin.integration.test.js
+// backend/tests/firebase.integration.test.js
 
-// --- Mock firebase-admin before loading the config module ---
-var _store = {};
-var mockDb = {
-  _settings: {},
-  settings: jest.fn(function (cfg) {
-    mockDb._settings = cfg || {};
-  }),
-  collection: function (name) {
-    return {
-      doc: function (id) {
-        var key = name + "/" + id;
-        return {
-          set: function (data) {
-            _store[key] = Object.assign({}, data);
-            return Promise.resolve();
-          },
-          get: function () {
-            var exists = Object.prototype.hasOwnProperty.call(_store, key);
-            return Promise.resolve({
-              exists: exists,
-              data: function () {
-                return exists ? Object.assign({}, _store[key]) : undefined;
-              },
-            });
-          },
-        };
-      },
-    };
-  },
-  terminate: jest.fn(function () {
-    _store = {};
-    return Promise.resolve();
-  }),
-};
+// Provide env expected by backend/config/firebase.js before requiring anything
+process.env.GCP_PROJECT = 'demo-terrain-test';
+process.env.DATABASE_NAME = 'test-db';
 
+// --- Mock firebase-admin before importing the module under test ---
 jest.mock(
   'firebase-admin',
-  function () {
+  () => {
+    let _store = {};
+
+    const mockDb = {
+      _settings: {},
+      settings: jest.fn(cfg => {
+        mockDb._settings = cfg || {};
+      }),
+      collection: name => ({
+        doc: id => {
+          const key = `${name}/${id}`;
+          return {
+            set: data => {
+              _store[key] = { ...data };
+              return Promise.resolve();
+            },
+            get: () => {
+              const exists = Object.prototype.hasOwnProperty.call(_store, key);
+              return Promise.resolve({
+                exists,
+                data: () => (exists ? { ..._store[key] } : undefined),
+              });
+            },
+          };
+        },
+      }),
+      terminate: jest.fn(() => {
+        _store = {};
+        return Promise.resolve();
+      }),
+    };
+
+    const initializeApp = jest.fn();
+
+    // Everything defined INSIDE the factory; expose handles for assertions
     return {
-      initializeApp: jest.fn(function () { /* no-op */ }),
-      firestore: function () { return mockDb; },
-      auth: function () { return {}; },
+      initializeApp,
+      firestore: () => mockDb,
+      auth: () => ({}),
+      apps: [],
+      __mockDb: mockDb,
+      __initializeApp: initializeApp,
     };
   },
   { virtual: true }
 );
 
-// Now require config
-var cfg = require('../config/firebase'); 
-var db = cfg.db;
+// Now import the firebase admin wrapper from config/
+const { db } = require('../config/firebase');
+const admin = require('firebase-admin'); // the mocked module
 
-describe('Firebase config smoke test', function () {
+describe('Firebase config smoke test', () => {
+  test('initializes admin with project + applies database settings', async () => {
+    // initializeApp called with project id from env
+    expect(admin.__initializeApp).toHaveBeenCalledWith({ projectId: 'demo-terrain-test' });
+
+    // db.settings called with databaseId from env
+    expect(admin.__mockDb.settings).toHaveBeenCalled();
+    expect(admin.__mockDb._settings).toHaveProperty('databaseId', 'test-db');
+  });
+
   test(
     'writes and reads a document using mocked Firestore',
-    async function () {
-      var ref = db.collection('integration-tests').doc('ping');
+    async () => {
+      const ref = db.collection('integration-tests').doc('ping');
       await ref.set({ timestamp: 123, ok: true });
-      var snap = await ref.get();
+      const snap = await ref.get();
 
       expect(snap.exists).toBe(true);
-      var data = snap.data();
+      const data = snap.data();
       expect(data).toHaveProperty('timestamp', 123);
       expect(data).toHaveProperty('ok', true);
     },
     15000
   );
 
-  afterAll(async function () {
+  afterAll(async () => {
     if (typeof db.terminate === 'function') {
       await db.terminate();
     }

@@ -1,25 +1,31 @@
+// backend/firebase.js
 const admin = require('firebase-admin');
 const path = require('path');
 
 // Load environment variables from .env file in the parent directory
 require('dotenv').config({ path: path.join(__dirname, '../..', '.env') });
 
-// Environment-based configuration
-const PROJECT_ID = process.env.PROJECT_ID_FIREBASE;
+// GCP_PROJECT and fall back ---
+const PROJECT_ID =
+  process.env.GCP_PROJECT ||          // used by npm:dev:api / CI
+  process.env.PROJECT_ID_FIREBASE ||  
+  'demo-terrain';                     // safe default for local
 
-// Initialize Firebase Admin
-admin.initializeApp({
-    projectId: PROJECT_ID,
-});
+// Initialize Firebase Admin 
+if (!admin.apps.length) {
+  admin.initializeApp({ projectId: PROJECT_ID });
+}
 
 // Get Firestore instance
 const db = admin.firestore();
 
-// In the event that you want to use a database that is not (default)
-db.settings({
-  databaseId: process.env.DATABASE_NAME
-});
+db.settings({ databaseId: process.env.DATABASE_NAME });
 
-const adminAuth = admin.auth()
+// log when using emulator
+if (process.env.FIRESTORE_EMULATOR_HOST) {
+  console.log('[firebase-admin] Using Firestore emulator at', process.env.FIRESTORE_EMULATOR_HOST, 'for project', PROJECT_ID);
+}
+
+const adminAuth = admin.auth();
 
 module.exports = { db, admin, adminAuth };
